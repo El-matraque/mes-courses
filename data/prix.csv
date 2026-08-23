@@ -44,3 +44,32 @@ lait-bio;lait;Lait demi-écrémé bio;1 L;🥛 Crèmerie;1,35;;1,28;;1,29;;2026-
 pates-eco;pates;Spaghetti premier prix;500 g;🥫 Épicerie;0,75;;0,69;;0,69;;2026-08-23
 cafe-eco;cafe;Café moulu premier prix;500 g;🥫 Épicerie;4,29;;3,99;;4,78;;2026-08-23
 pq-eco;pq;Papier toilette premier prix;12 rouleaux;🧴 Hygiène & Entretien;4,99;;4,79;;2,36;;2026-08-23
+
+barilla-spaghetti5;pates;Barilla Spaghetti n°5;500 g;🥫 Épicerie;1,59;;1,59;;1,59;;2026-08-23
+barilla-spaghetti5-1kg;pates;Barilla Spaghetti n°5;1 kg;🥫 Épicerie;;;;;4,98;;2026-08-23
+barilla-spaghettoni7;pates;Barilla Spaghettoni n°7;500 g;🥫 Épicerie;1,99;;1,99;;1,99;;2026-08-23
+barilla-capellini;pates;Barilla Capellini n°1;500 g;🥫 Épicerie;1,79;;1,79;;1,79;;2026-08-23
+barilla-penne;pates;Barilla Penne rigate n°73;500 g;🥫 Épicerie;1,89;;1,89;;1,89;;2026-08-23
+barilla-fusilli;pates;Barilla Fusilli;500 g;🥫 Épicerie;1,81;;1,81;;1,79;;2026-08-23
+barilla-rigatoni;pates;Barilla Rigatoni n°89;500 g;🥫 Épicerie;1,95;;1,95;;1,95;;2026-08-23
+barilla-maccheroni;pates;Barilla Maccheroni;500 g;🥫 Épicerie;2,25;;2,18;;;;2026-08-23
+barilla-risoni;pates;Barilla Risoni;500 g;🥫 Épicerie;1,95;;1,89;;;;2026-08-23
+barilla-farfalle;pates;Barilla Farfalle;500 g;🥫 Épicerie;2,69;;2,69;;2,69;;2026-08-23
+barilla-conchiglie;pates;Barilla Conchiglie rigate;500 g;🥫 Épicerie;2,55;;2,55;;;;2026-08-23
+barilla-tortiglioni;pates;Barilla Tortiglioni Collezione;500 g;🥫 Épicerie;2,79;;2,79;;;;2026-08-23
+barilla-linguine;pates;Barilla Linguine Collezione;500 g;🥫 Épicerie;2,45;;2,45;;2,39;;2026-08-23
+barilla-tagliatelle;pates;Barilla Tagliatelle Collezione;500 g;🥫 Épicerie;3,75;;3,75;;3,75;;2026-08-23
+barilla-fettuccine;pates;Barilla Fettuccine Collezione;500 g;🥫 Épicerie;;;4,05;;;;2026-08-23
+barilla-lasagne;pates;Barilla Lasagne all'uovo Collezione;500 g;🥫 Épicerie;5,15;;5,15;;4,99;;2026-08-23
+barilla-lasagne-rapide;pates;Barilla Lasagne Rapide;400 g;🥫 Épicerie;;;3,49;;;;2026-08-23
+barilla-cannelloni;pates;Barilla Cannelloni Collezione;250 g;🥫 Épicerie;3,49;;3,49;;3,49;;2026-08-23
+barilla-piccolini;pates;Barilla Piccolini mini penne;500 g;🥫 Épicerie;2,45;;2,45;;2,41;;2026-08-23
+barilla-spaghetti-sg;pates;Barilla Spaghetti sans gluten;400 g;🥫 Épicerie;3,99;;3,99;;3,99;;2026-08-23
+barilla-penne-sg;pates;Barilla Penne sans gluten;400 g;🥫 Épicerie;3,99;;3,99;;3,99;;2026-08-23
+barilla-spaghetti-protein;pates;Barilla Protein+ Spaghetti;400 g;🥫 Épicerie;2,95;1+1;2,95;;;;2026-08-23
+barilla-penne-protein;pates;Barilla Protein+ Penne;400 g;🥫 Épicerie;3,19;1+1;3,19;;;;2026-08-23
+barilla-fusilli-protein;pates;Barilla Protein+ Fusilli;400 g;🥫 Épicerie;;;3,19;;;;2026-08-23
+barilla-spaghettoni-bronzo;pates;Barilla Spaghettoni Al Bronzo;500 g;🥫 Épicerie;2,55;;;;;;2026-08-23
+barilla-mezzi-rigatoni-bronzo;pates;Barilla Mezzi Rigatoni Al Bronzo;500 g;🥫 Épicerie;2,59;;;;;;2026-08-23
+barilla-penne-bronzo;pates;Barilla Penne rigate Al Bronzo;500 g;🥫 Épicerie;2,29;;;;;;2026-08-23
+barilla-fusilli-bronzo;pates;Barilla Fusilli Al Bronzo;500 g;🥫 Épicerie;2,29;;;;;;2026-08-23
