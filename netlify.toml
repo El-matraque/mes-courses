@@ -1,0 +1,5 @@
+[build]
+  publish = "."
+
+# La fonction netlify/functions/prices.mjs expose déjà /api/prices via
+# `export const config = { path: "/api/prices" }` — pas de redirect nécessaire.

@@ -1,0 +1,765 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#16a34a">
+<title>Mes Courses — comparateur Delhaize · Carrefour · Colruyt</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --ink:#1c2430; --muted:#68727f;
+    --accent:#16a34a; --accent-soft:#e7f6ec; --line:#e6e9ee;
+    --danger:#dc2626; --promo:#d97706; --promo-bg:#fef3c7;
+    --radius:14px; --nav-h:64px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0; padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    background:var(--bg); color:var(--ink); font-size:15px; line-height:1.4;
+    padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom));
+  }
+  header{
+    position:sticky; top:0; z-index:20; background:var(--card);
+    border-bottom:1px solid var(--line);
+    padding:calc(10px + env(safe-area-inset-top)) 16px 10px;
+  }
+  .hrow{display:flex; align-items:center; justify-content:space-between; gap:8px; max-width:640px; margin:0 auto}
+  h1{font-size:19px; margin:0; font-weight:700}
+  .badges{display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end}
+  .badge{font-size:11px; font-weight:600; padding:3px 8px; border-radius:999px; white-space:nowrap}
+  .badge.demo{background:var(--promo-bg); color:var(--promo)}
+  .badge.src{background:#eef2f7; color:var(--muted)}
+  main{max-width:640px; margin:0 auto; padding:14px 14px 20px}
+  section[hidden]{display:none}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:12px; margin-bottom:10px}
+  .muted{color:var(--muted)}
+  .small{font-size:12.5px}
+  .empty{ text-align:center; padding:36px 16px; color:var(--muted)}
+  .empty .big{font-size:40px; margin-bottom:8px}
+
+  /* ---- Ajout rapide ---- */
+  .addbar{position:relative; margin-bottom:12px}
+  .addrow{display:flex; gap:8px}
+  .addrow input{
+    flex:1; font-size:16px; padding:12px 14px; border:1px solid var(--line);
+    border-radius:var(--radius); background:var(--card); color:var(--ink); outline:none;
+  }
+  .addrow input:focus{border-color:var(--accent)}
+  .addrow button{
+    background:var(--accent); color:#fff; border:none; border-radius:var(--radius);
+    font-size:22px; width:48px; flex:0 0 48px; cursor:pointer; font-weight:700;
+  }
+  .suggest{
+    position:absolute; left:0; right:0; top:calc(100% + 4px); z-index:15;
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:0 8px 24px rgba(0,0,0,.10); overflow:hidden; max-height:280px; overflow-y:auto;
+  }
+  .suggest button{
+    display:flex; width:100%; justify-content:space-between; align-items:center; gap:8px;
+    background:none; border:none; border-bottom:1px solid var(--line);
+    padding:11px 14px; font-size:15px; text-align:left; cursor:pointer; color:var(--ink);
+  }
+  .suggest button:last-child{border-bottom:none}
+  .suggest button:active{background:var(--accent-soft)}
+  .chips{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; justify-content:center}
+  .chip{
+    background:var(--card); border:1px solid var(--line); border-radius:999px;
+    padding:8px 14px; font-size:14px; cursor:pointer; color:var(--ink);
+  }
+  .chip:active{background:var(--accent-soft); border-color:var(--accent)}
+
+  /* ---- Liste ---- */
+  .catTitle{font-size:13px; font-weight:700; color:var(--muted); margin:16px 4px 6px; text-transform:uppercase; letter-spacing:.4px}
+  .item{
+    display:flex; align-items:center; gap:10px; background:var(--card);
+    border:1px solid var(--line); border-radius:var(--radius); padding:10px 12px; margin-bottom:8px;
+  }
+  .item.checked .iname{text-decoration:line-through; color:var(--muted)}
+  .ck{
+    width:24px; height:24px; flex:0 0 24px; border:2px solid var(--line); border-radius:8px;
+    background:var(--card); cursor:pointer; display:flex; align-items:center; justify-content:center;
+    font-size:14px; color:#fff; padding:0;
+  }
+  .item.checked .ck{background:var(--accent); border-color:var(--accent)}
+  .imain{flex:1; min-width:0}
+  .iname{font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .isub{font-size:12px; color:var(--muted)}
+  .qty{display:flex; align-items:center; gap:2px}
+  .qty button{
+    width:30px; height:30px; border-radius:9px; border:1px solid var(--line);
+    background:var(--bg); font-size:17px; cursor:pointer; color:var(--ink); line-height:1;
+  }
+  .qty span{min-width:24px; text-align:center; font-weight:700}
+  .del{background:none; border:none; color:var(--muted); font-size:17px; cursor:pointer; padding:4px}
+
+  /* ---- Comparateur ---- */
+  .totalsGrid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px}
+  .tstore{border-radius:var(--radius); padding:10px 8px; text-align:center; color:#fff}
+  .tstore .tname{font-size:12px; font-weight:700; opacity:.95}
+  .tstore .tval{font-size:17px; font-weight:800; margin-top:2px}
+  .tstore .tmiss{font-size:10.5px; opacity:.9; margin-top:2px}
+  .cmp{margin-bottom:10px}
+  .cmpHead{display:flex; justify-content:space-between; align-items:baseline; gap:8px; margin-bottom:8px}
+  .cmpHead .qtyTag{font-size:12px; color:var(--muted); white-space:nowrap}
+  .prow{display:grid; grid-template-columns:repeat(3,1fr); gap:6px}
+  .pcell{
+    border:1.5px solid var(--line); border-radius:10px; padding:7px 6px; text-align:center; position:relative;
+  }
+  .pcell .sname{font-size:11px; font-weight:700; color:var(--muted)}
+  .pcell .pval{font-size:15px; font-weight:800; margin-top:1px}
+  .pcell .punit{font-size:10.5px; color:var(--muted)}
+  .pcell.best{border-color:var(--accent); background:var(--accent-soft)}
+  .pcell.best .pval{color:var(--accent)}
+  .pcell.na{opacity:.45}
+  .promoTag{
+    display:inline-block; background:var(--promo-bg); color:var(--promo);
+    font-size:10px; font-weight:800; border-radius:6px; padding:1px 5px; margin-top:3px;
+  }
+  .strike{text-decoration:line-through; color:var(--muted); font-weight:500; font-size:11px; margin-right:3px}
+  .badge.demo.real{background:var(--accent-soft); color:var(--accent)}
+
+  /* ---- Alternatives ---- */
+  .altBox{margin-top:8px; border-top:1px dashed var(--line); padding-top:8px; display:flex; flex-direction:column; gap:6px}
+  .alt{display:flex; align-items:center; gap:6px; font-size:12.5px; flex-wrap:wrap}
+  .alt .altTxt{flex:1; min-width:180px}
+  .altSave{color:var(--accent); font-weight:800}
+  .altBtn{
+    background:var(--accent); color:#fff; border:none; border-radius:8px;
+    padding:5px 10px; font-size:12px; font-weight:700; cursor:pointer;
+  }
+
+  /* ---- Paniers ---- */
+  .toggle{display:flex; background:var(--card); border:1px solid var(--line); border-radius:999px; padding:3px; margin-bottom:12px}
+  .toggle button{
+    flex:1; border:none; background:none; padding:9px 6px; border-radius:999px;
+    font-size:13.5px; font-weight:600; color:var(--muted); cursor:pointer;
+  }
+  .toggle button.on{background:var(--accent); color:#fff}
+  .basket{border-left:5px solid var(--line)}
+  .bhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:6px}
+  .bhead .bname{font-weight:800; font-size:16px}
+  .bhead .btotal{font-weight:800; font-size:16px}
+  .bline{display:flex; justify-content:space-between; gap:8px; padding:5px 0; border-bottom:1px dashed var(--line); font-size:14px}
+  .bline:last-of-type{border-bottom:none}
+  .bline .n{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .bactions{display:flex; gap:8px; margin-top:10px}
+  .bactions button, .bactions a{
+    flex:1; text-align:center; padding:9px 8px; border-radius:10px; font-size:13px; font-weight:700;
+    border:1px solid var(--line); background:var(--bg); color:var(--ink); cursor:pointer; text-decoration:none;
+  }
+  .saveBox{background:var(--accent-soft); border:1px solid #bfe6cc; border-radius:var(--radius); padding:12px; margin-bottom:12px; text-align:center}
+  .saveBox .amt{font-size:22px; font-weight:800; color:var(--accent)}
+  .rank{display:flex; align-items:center; gap:10px}
+  .rank .medal{font-size:22px; width:30px; text-align:center}
+  .rank .rmain{flex:1}
+  .rank .rtotal{font-weight:800; font-size:17px}
+
+  /* ---- Nav ---- */
+  nav{
+    position:fixed; bottom:0; left:0; right:0; z-index:30;
+    background:var(--card); border-top:1px solid var(--line);
+    display:flex; height:calc(var(--nav-h) + env(safe-area-inset-bottom));
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  nav button{
+    flex:1; background:none; border:none; cursor:pointer; color:var(--muted);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+    font-size:11.5px; font-weight:600;
+  }
+  nav button .ico{font-size:21px}
+  nav button.on{color:var(--accent)}
+  nav .cnt{
+    position:absolute; transform:translate(14px,-26px);
+    background:var(--danger); color:#fff; font-size:10px; font-weight:800;
+    border-radius:999px; min-width:16px; height:16px; line-height:16px; padding:0 4px;
+  }
+  .toast{
+    position:fixed; bottom:calc(var(--nav-h) + 18px); left:50%; transform:translateX(-50%);
+    background:var(--ink); color:#fff; padding:9px 16px; border-radius:999px; font-size:13.5px;
+    opacity:0; pointer-events:none; transition:opacity .25s; z-index:50; white-space:nowrap;
+  }
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hrow">
+    <h1>🛒 Mes Courses</h1>
+    <div class="badges">
+      <span class="badge demo" id="demoBadge">Prix simulés</span>
+      <span class="badge src" id="srcBadge">…</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section id="view-liste">
+    <div class="addbar">
+      <div class="addrow">
+        <input id="addInput" type="text" placeholder="Ajouter un article… (ex : lait, pain)" autocomplete="off" enterkeyhint="done">
+        <button id="addBtn" aria-label="Ajouter">+</button>
+      </div>
+      <div class="suggest" id="suggest" hidden></div>
+    </div>
+    <div id="listBody"></div>
+  </section>
+
+  <section id="view-comparer" hidden>
+    <div id="cmpBody"></div>
+  </section>
+
+  <section id="view-paniers" hidden>
+    <div id="basketBody"></div>
+  </section>
+</main>
+
+<nav>
+  <button data-view="liste" class="on"><span class="ico">🛒</span>Liste<span class="cnt" id="navCnt" hidden></span></button>
+  <button data-view="comparer"><span class="ico">⚖️</span>Comparer</button>
+  <button data-view="paniers"><span class="ico">🧺</span>Paniers</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================================
+   DONNÉES — actuellement SIMULÉES.
+   Au chargement, l'app tente d'abord GET /api/prices (fonction Netlify,
+   voir netlify/functions/prices.mjs). Si indisponible, elle utilise le
+   jeu de données local ci-dessous. Pour brancher de vraies données
+   (scraping, API tierce type Apify/Pepesto), il suffit que /api/prices
+   renvoie le même format : { stores:[...], catalog:[...] }.
+   ===================================================================== */
+
+const LOCAL_DATA = {
+  stores: [
+    {"id": "delhaize", "name": "Delhaize", "color": "#CE1126", "url": "https://www.delhaize.be"},
+    {"id": "carrefour", "name": "Carrefour", "color": "#004E9F", "url": "https://www.carrefour.be"},
+    {"id": "colruyt", "name": "Colruyt", "color": "#F07D00", "url": "https://www.colruyt.be"}
+  ],
+  /* prices: { <storeId>: { p: prix, promo?: {t:'pct'|'1+1'|'2e-50', v?:%} } } — null = indisponible.
+     famille : produits similaires (alternatives). releve : date du relevé réel, null = simulé. */
+  catalog: [
+    {"id": "bananes", "name": "Bananes", "unit": "1 kg", "cat": "🍎 Fruits & Légumes", "prices": {"delhaize": {"p": 1.99}, "carrefour": {"p": 1.89, "promo": {"t": "pct", "v": 20}}, "colruyt": {"p": 1.75}}, "famille": "bananes"},
+    {"id": "pommes", "name": "Pommes Jonagold", "unit": "2 kg", "cat": "🍎 Fruits & Légumes", "prices": {"delhaize": {"p": 4.49}, "carrefour": {"p": 4.29}, "colruyt": {"p": 3.99}}, "famille": "pommes"},
+    {"id": "tomates", "name": "Tomates grappe", "unit": "1 kg", "cat": "🍎 Fruits & Légumes", "prices": {"delhaize": {"p": 3.29}, "carrefour": {"p": 2.99}, "colruyt": {"p": 2.79}}, "famille": "tomates"},
+    {"id": "carottes", "name": "Carottes", "unit": "1 kg", "cat": "🍎 Fruits & Légumes", "prices": {"delhaize": {"p": 1.49}, "carrefour": {"p": 1.39}, "colruyt": {"p": 1.19}}, "famille": "carottes"},
+    {"id": "pdt", "name": "Pommes de terre", "unit": "2,5 kg", "cat": "🍎 Fruits & Légumes", "prices": {"delhaize": {"p": 3.99}, "carrefour": {"p": 3.79}, "colruyt": {"p": 3.49}}, "famille": "pdt"},
+    {"id": "oignons", "name": "Oignons", "unit": "1 kg", "cat": "🍎 Fruits & Légumes", "prices": {"delhaize": {"p": 1.59}, "carrefour": {"p": 1.49}, "colruyt": {"p": 1.29}}, "famille": "oignons"},
+    {"id": "salade", "name": "Salade iceberg", "unit": "pièce", "cat": "🍎 Fruits & Légumes", "prices": {"delhaize": {"p": 1.49}, "carrefour": {"p": 1.39}, "colruyt": {"p": 1.25}}, "famille": "salade"},
+    {"id": "poivrons", "name": "Poivrons trio", "unit": "3 pièces", "cat": "🍎 Fruits & Légumes", "prices": {"delhaize": {"p": 2.99, "promo": {"t": "pct", "v": 25}}, "carrefour": {"p": 2.79}, "colruyt": {"p": 2.59}}, "famille": "poivrons"},
+    {"id": "lait", "name": "Lait demi-écrémé", "unit": "1 L", "cat": "🥛 Crèmerie", "prices": {"delhaize": {"p": 1.09}, "carrefour": {"p": 1.05}, "colruyt": {"p": 0.95}}, "famille": "lait"},
+    {"id": "beurre", "name": "Beurre doux", "unit": "250 g", "cat": "🥛 Crèmerie", "prices": {"delhaize": {"p": 3.29}, "carrefour": {"p": 2.99}, "colruyt": {"p": 2.89}}, "famille": "beurre"},
+    {"id": "oeufs", "name": "Œufs M", "unit": "12 pièces", "cat": "🥛 Crèmerie", "prices": {"delhaize": {"p": 3.79, "promo": {"t": "pct", "v": 15}}, "carrefour": {"p": 3.49}, "colruyt": {"p": 3.29}}, "famille": "oeufs"},
+    {"id": "yaourt", "name": "Yaourt nature", "unit": "4 × 125 g", "cat": "🥛 Crèmerie", "prices": {"delhaize": {"p": 2.19}, "carrefour": {"p": 1.99, "promo": {"t": "1+1"}}, "colruyt": {"p": 1.85}}, "famille": "yaourt"},
+    {"id": "gouda", "name": "Gouda jeune tranches", "unit": "300 g", "cat": "🥛 Crèmerie", "prices": {"delhaize": {"p": 3.99}, "carrefour": {"p": 3.79}, "colruyt": {"p": 3.49}}, "famille": "gouda"},
+    {"id": "rape", "name": "Emmental râpé", "unit": "200 g", "cat": "🥛 Crèmerie", "prices": {"delhaize": {"p": 2.49}, "carrefour": {"p": 2.29}, "colruyt": {"p": 2.19}}, "famille": "rape"},
+    {"id": "poulet", "name": "Blanc de poulet", "unit": "500 g", "cat": "🥩 Viande & Poisson", "prices": {"delhaize": {"p": 6.49, "promo": {"t": "pct", "v": 25}}, "carrefour": {"p": 5.99}, "colruyt": {"p": 5.79}}, "famille": "poulet"},
+    {"id": "hache", "name": "Haché porc & veau", "unit": "500 g", "cat": "🥩 Viande & Poisson", "prices": {"delhaize": {"p": 4.99}, "carrefour": {"p": 4.79}, "colruyt": {"p": 4.49}}, "famille": "hache"},
+    {"id": "saumon", "name": "Pavés de saumon", "unit": "2 × 125 g", "cat": "🥩 Viande & Poisson", "prices": {"delhaize": {"p": 8.99}, "carrefour": {"p": 8.49}, "colruyt": {"p": 7.99, "promo": {"t": "pct", "v": 15}}}, "famille": "saumon"},
+    {"id": "jambon", "name": "Jambon cuit", "unit": "200 g", "cat": "🥩 Viande & Poisson", "prices": {"delhaize": {"p": 3.49}, "carrefour": {"p": 3.29}, "colruyt": {"p": 2.99}}, "famille": "jambon"},
+    {"id": "pain", "name": "Pain gris tranché", "unit": "800 g", "cat": "🍞 Boulangerie", "prices": {"delhaize": {"p": 2.59}, "carrefour": {"p": 2.39}, "colruyt": {"p": 2.19}}, "famille": "pain"},
+    {"id": "baguette", "name": "Baguette", "unit": "pièce", "cat": "🍞 Boulangerie", "prices": {"delhaize": {"p": 1.19}, "carrefour": {"p": 1.09}, "colruyt": {"p": 0.99}}, "famille": "baguette"},
+    {"id": "pistolets", "name": "Pistolets", "unit": "6 pièces", "cat": "🍞 Boulangerie", "prices": {"delhaize": {"p": 2.1}, "carrefour": null, "colruyt": {"p": 1.89}}, "famille": "pistolets"},
+    {"id": "pates", "name": "Spaghetti", "unit": "500 g", "cat": "🥫 Épicerie", "prices": {"delhaize": {"p": 1.29}, "carrefour": {"p": 1.19, "promo": {"t": "2e-50"}}, "colruyt": {"p": 0.99}}, "famille": "pates"},
+    {"id": "riz", "name": "Riz basmati", "unit": "1 kg", "cat": "🥫 Épicerie", "prices": {"delhaize": {"p": 2.99}, "carrefour": {"p": 2.79}, "colruyt": {"p": 2.59}}, "famille": "riz"},
+    {"id": "sauce", "name": "Sauce tomate basilic", "unit": "420 g", "cat": "🥫 Épicerie", "prices": {"delhaize": {"p": 1.99}, "carrefour": {"p": 1.89}, "colruyt": {"p": 1.69}}, "famille": "sauce"},
+    {"id": "huile", "name": "Huile d'olive extra vierge", "unit": "750 ml", "cat": "🥫 Épicerie", "prices": {"delhaize": {"p": 7.99, "promo": {"t": "pct", "v": 20}}, "carrefour": {"p": 7.49}, "colruyt": {"p": 6.99}}, "famille": "huile"},
+    {"id": "cafe", "name": "Café moulu", "unit": "500 g", "cat": "🥫 Épicerie", "prices": {"delhaize": {"p": 6.49}, "carrefour": {"p": 5.99}, "colruyt": {"p": 5.69, "promo": {"t": "pct", "v": 20}}}, "famille": "cafe"},
+    {"id": "confiture", "name": "Confiture de fraises", "unit": "450 g", "cat": "🥫 Épicerie", "prices": {"delhaize": {"p": 2.79}, "carrefour": {"p": 2.59}, "colruyt": {"p": 2.39}}, "famille": "confiture"},
+    {"id": "muesli", "name": "Muesli croustillant", "unit": "750 g", "cat": "🥫 Épicerie", "prices": {"delhaize": {"p": 3.99}, "carrefour": {"p": 3.69}, "colruyt": {"p": 3.49}}, "famille": "muesli"},
+    {"id": "chocolat", "name": "Chocolat noir", "unit": "100 g", "cat": "🥫 Épicerie", "prices": {"delhaize": {"p": 2.49, "promo": {"t": "1+1"}}, "carrefour": {"p": 2.29}, "colruyt": {"p": 2.19}}, "famille": "chocolat"},
+    {"id": "frites", "name": "Frites surgelées", "unit": "1 kg", "cat": "🧊 Surgelés", "prices": {"delhaize": {"p": 2.89}, "carrefour": {"p": 2.69}, "colruyt": {"p": 2.49}}, "famille": "frites"},
+    {"id": "epinards", "name": "Épinards en branches", "unit": "450 g", "cat": "🧊 Surgelés", "prices": {"delhaize": {"p": 2.19}, "carrefour": {"p": 1.99}, "colruyt": {"p": 1.89}}, "famille": "epinards"},
+    {"id": "pizza", "name": "Pizza margherita", "unit": "pièce", "cat": "🧊 Surgelés", "prices": {"delhaize": {"p": 3.49}, "carrefour": {"p": 3.29, "promo": {"t": "pct", "v": 30}}, "colruyt": {"p": 2.99}}, "famille": "pizza"},
+    {"id": "eau", "name": "Eau pétillante", "unit": "6 × 1,5 L", "cat": "🥤 Boissons", "prices": {"delhaize": {"p": 3.99}, "carrefour": {"p": 3.79}, "colruyt": {"p": 3.49}}, "famille": "eau"},
+    {"id": "jus", "name": "Jus d'orange", "unit": "1 L", "cat": "🥤 Boissons", "prices": {"delhaize": {"p": 2.29}, "carrefour": {"p": 2.19}, "colruyt": {"p": 1.99}}, "famille": "jus"},
+    {"id": "biere", "name": "Bière blonde", "unit": "6 × 33 cl", "cat": "🥤 Boissons", "prices": {"delhaize": {"p": 5.99, "promo": {"t": "pct", "v": 20}}, "carrefour": {"p": 5.79}, "colruyt": {"p": 5.49}}, "famille": "biere"},
+    {"id": "pq", "name": "Papier toilette", "unit": "12 rouleaux", "cat": "🧴 Hygiène & Entretien", "prices": {"delhaize": {"p": 6.99}, "carrefour": {"p": 6.49, "promo": {"t": "pct", "v": 25}}, "colruyt": {"p": 5.99}}, "famille": "pq"},
+    {"id": "lavevaisselle", "name": "Tablettes lave-vaisselle", "unit": "30 pièces", "cat": "🧴 Hygiène & Entretien", "prices": {"delhaize": {"p": 8.99}, "carrefour": {"p": 8.49}, "colruyt": {"p": 7.99, "promo": {"t": "1+1"}}}, "famille": "lavevaisselle"},
+    {"id": "geldouche", "name": "Gel douche", "unit": "500 ml", "cat": "🧴 Hygiène & Entretien", "prices": {"delhaize": {"p": 3.29}, "carrefour": {"p": 2.99}, "colruyt": {"p": 2.79}}, "famille": "geldouche"},
+    {"id": "lessive", "name": "Lessive liquide", "unit": "1,5 L", "cat": "🧴 Hygiène & Entretien", "prices": {"delhaize": {"p": 8.49}, "carrefour": {"p": 7.99}, "colruyt": {"p": 7.49}}, "famille": "lessive"},
+    {"id": "dentifrice", "name": "Dentifrice", "unit": "2 × 75 ml", "cat": "🧴 Hygiène & Entretien", "prices": {"delhaize": {"p": 2.99}, "carrefour": {"p": 2.79}, "colruyt": {"p": 2.59}}, "famille": "dentifrice"},
+    {"id": "lait-eco", "famille": "lait", "name": "Lait demi-écrémé premier prix", "unit": "1 L", "cat": "🥛 Crèmerie", "prices": {"delhaize": {"p": 0.89}, "carrefour": {"p": 0.85}, "colruyt": {"p": 0.85}}},
+    {"id": "lait-bio", "famille": "lait", "name": "Lait demi-écrémé bio", "unit": "1 L", "cat": "🥛 Crèmerie", "prices": {"delhaize": {"p": 1.35}, "carrefour": {"p": 1.28}, "colruyt": {"p": 1.29}}},
+    {"id": "pates-eco", "famille": "pates", "name": "Spaghetti premier prix", "unit": "500 g", "cat": "🥫 Épicerie", "prices": {"delhaize": {"p": 0.75}, "carrefour": {"p": 0.69}, "colruyt": {"p": 0.65}}},
+    {"id": "cafe-eco", "famille": "cafe", "name": "Café moulu premier prix", "unit": "500 g", "cat": "🥫 Épicerie", "prices": {"delhaize": {"p": 4.29}, "carrefour": {"p": 3.99}, "colruyt": {"p": 3.89}}},
+    {"id": "pq-eco", "famille": "pq", "name": "Papier toilette premier prix", "unit": "12 rouleaux", "cat": "🧴 Hygiène & Entretien", "prices": {"delhaize": {"p": 4.99}, "carrefour": {"p": 4.79}, "colruyt": {"p": 4.59}}}
+  ]
+};
+
+/* ============================ ÉTAT ============================ */
+let DATA = LOCAL_DATA;
+let state = { items: [] }; // {uid, catalogId|null, name, qty, checked}
+let view = "liste";
+let basketMode = "split"; // 'split' | 'single'
+
+const LS_KEY = "mes-courses-v1";
+function saveState(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){} }
+function loadState(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw){ const s = JSON.parse(raw); if(s && Array.isArray(s.items)) state = s; }
+  }catch(e){}
+}
+
+const $ = s => document.querySelector(s);
+const fmt = n => n.toLocaleString("fr-BE",{style:"currency",currency:"EUR"});
+const esc = s => String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const catItem = id => DATA.catalog.find(c=>c.id===id) || null;
+
+/* ================== LOGIQUE PRIX & PROMOS ==================== */
+/* Coût total pour q unités selon la promo. Exporté à l'identique
+   dans tests/logic.test.mjs — garder les deux synchronisés. */
+function cost(entry, q){
+  if(!entry) return null;
+  const p = entry.p, promo = entry.promo;
+  if(!promo) return p*q;
+  if(promo.t==="pct")   return p*(1-promo.v/100)*q;
+  if(promo.t==="1+1")   return p*Math.ceil(q/2);
+  if(promo.t==="2e-50") return p*(Math.floor(q/2)*1.5 + q%2);
+  return p*q;
+}
+function promoLabel(promo){
+  if(!promo) return "";
+  if(promo.t==="pct") return "-"+promo.v+"%";
+  if(promo.t==="1+1") return "1+1 gratuit";
+  if(promo.t==="2e-50") return "2ᵉ à -50%";
+  return "";
+}
+/* Meilleure enseigne pour un article donné (qty incluse) */
+function bestStoreFor(cat, q){
+  let best=null;
+  for(const s of DATA.stores){
+    const c = cost(cat.prices[s.id], q);
+    if(c!==null && (best===null || c<best.cost)) best={store:s, cost:c};
+  }
+  return best;
+}
+/* Articles de la liste enrichis (comparables vs libres) */
+function enrichedItems(){
+  return state.items.map(it=>({...it, cat: it.catalogId ? catItem(it.catalogId) : null}));
+}
+/* Totaux par enseigne + indisponibles.
+   adj = total "équitable" : les articles indisponibles dans l'enseigne
+   sont comptés au meilleur prix ailleurs, pour comparer à panier égal. */
+function storeTotals(items){
+  const res = {};
+  for(const s of DATA.stores){
+    let total=0, missing=[], extra=0;
+    for(const it of items){
+      if(!it.cat) continue;
+      const c = cost(it.cat.prices[s.id], it.qty);
+      if(c===null){
+        missing.push(it.name);
+        const b=bestStoreFor(it.cat, it.qty);
+        if(b) extra+=b.cost;
+      } else total+=c;
+    }
+    res[s.id]={total, missing, adj: total+extra};
+  }
+  return res;
+}
+/* Répartition optimale : chaque article chez la moins chère */
+function optimalSplit(items){
+  const baskets = {}; let total=0;
+  for(const s of DATA.stores) baskets[s.id]=[];
+  const unmatched=[];
+  for(const it of items){
+    if(!it.cat){ unmatched.push(it); continue; }
+    const best = bestStoreFor(it.cat, it.qty);
+    if(!best){ unmatched.push(it); continue; }
+    baskets[best.store.id].push({...it, cost:best.cost});
+    total+=best.cost;
+  }
+  return {baskets, total, unmatched};
+}
+/* Alternatives : produits de la même famille, moins chers ou en promo */
+function alternativesFor(it){
+  if(!it.cat || !it.cat.famille) return [];
+  const cur = bestStoreFor(it.cat, it.qty);
+  if(!cur) return [];
+  return DATA.catalog
+    .filter(c=>c.famille===it.cat.famille && c.id!==it.cat.id)
+    .map(c=>({c, best:bestStoreFor(c, it.qty)}))
+    .filter(a=>{
+      if(!a.best) return false;
+      const e=a.c.prices[a.best.store.id];
+      const hasPromo=!!(e && e.promo);
+      return a.best.cost < cur.cost-0.001 || (hasPromo && a.best.cost <= cur.cost+0.001);
+    })
+    .sort((a,b)=>a.best.cost-b.best.cost)
+    .slice(0,2)
+    .map(a=>({...a, save:cur.cost-a.best.cost}));
+}
+function swapItem(uid, toId){
+  const it = state.items.find(i=>String(i.uid)===String(uid));
+  const target = catItem(toId);
+  if(!it || !target) return;
+  const existing = state.items.find(i=>i.catalogId===toId && i!==it);
+  if(existing){ existing.qty += it.qty; state.items = state.items.filter(i=>i!==it); }
+  else { it.catalogId = toId; it.name = target.name; }
+  saveState(); render();
+  toast("Remplacé par : "+target.name);
+}
+
+/* ============================ VUES ============================ */
+function switchView(v){
+  view=v;
+  for(const b of document.querySelectorAll("nav button")) b.classList.toggle("on", b.dataset.view===v);
+  $("#view-liste").hidden = v!=="liste";
+  $("#view-comparer").hidden = v!=="comparer";
+  $("#view-paniers").hidden = v!=="paniers";
+  render();
+  window.scrollTo(0,0);
+}
+
+function render(){
+  const n = state.items.length;
+  const cnt=$("#navCnt");
+  cnt.hidden = n===0; cnt.textContent=n;
+  if(view==="liste") renderList();
+  if(view==="comparer") renderCompare();
+  if(view==="paniers") renderBaskets();
+}
+
+/* ---- Liste ---- */
+const POPULAR = ["lait","pain","oeufs","bananes","pates","cafe","beurre","pq"];
+function renderList(){
+  const body=$("#listBody");
+  if(state.items.length===0){
+    body.innerHTML = `
+      <div class="empty">
+        <div class="big">🧾</div>
+        <div><b>Ta liste est vide</b></div>
+        <div class="small">Ajoute des articles ci-dessus, ou pars d'une suggestion :</div>
+        <div class="chips">${POPULAR.map(id=>{
+          const c=catItem(id); return c?`<button class="chip" data-add="${c.id}">${esc(c.name)}</button>`:"";
+        }).join("")}</div>
+      </div>`;
+    body.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>addItem(b.dataset.add,null));
+    return;
+  }
+  const items = enrichedItems();
+  const groups = {};
+  for(const it of items){
+    const g = it.cat ? it.cat.cat : "📝 Autres articles";
+    (groups[g]=groups[g]||[]).push(it);
+  }
+  let html="";
+  for(const [g,arr] of Object.entries(groups)){
+    html+=`<div class="catTitle">${esc(g)}</div>`;
+    for(const it of arr){
+      const best = it.cat ? bestStoreFor(it.cat, it.qty) : null;
+      html+=`
+      <div class="item ${it.checked?"checked":""}" data-uid="${it.uid}">
+        <button class="ck" data-act="check">${it.checked?"✓":""}</button>
+        <div class="imain">
+          <div class="iname">${esc(it.name)}</div>
+          <div class="isub">${it.cat?esc(it.cat.unit)+" · dès "+fmt(best.cost/it.qty)+" chez "+esc(best.store.name):"article libre — non comparé"}</div>
+        </div>
+        <div class="qty">
+          <button data-act="minus">−</button><span>${it.qty}</span><button data-act="plus">+</button>
+        </div>
+        <button class="del" data-act="del">✕</button>
+      </div>`;
+    }
+  }
+  body.innerHTML=html;
+  body.querySelectorAll(".item").forEach(el=>{
+    const uid=el.dataset.uid;
+    el.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>itemAction(uid,b.dataset.act));
+  });
+}
+
+function itemAction(uid, act){
+  const it = state.items.find(i=>String(i.uid)===String(uid));
+  if(!it) return;
+  if(act==="plus") it.qty++;
+  if(act==="minus") it.qty=Math.max(1,it.qty-1);
+  if(act==="check") it.checked=!it.checked;
+  if(act==="del") state.items=state.items.filter(i=>i!==it);
+  saveState(); render();
+}
+
+function addItem(catalogId, freeName){
+  if(catalogId){
+    const existing = state.items.find(i=>i.catalogId===catalogId);
+    if(existing){ existing.qty++; toast("Quantité +1 : "+existing.name); }
+    else{
+      const c=catItem(catalogId);
+      state.items.push({uid:Date.now()+Math.random(), catalogId, name:c.name, qty:1, checked:false});
+      toast("Ajouté : "+c.name);
+    }
+  }else if(freeName && freeName.trim()){
+    state.items.push({uid:Date.now()+Math.random(), catalogId:null, name:freeName.trim(), qty:1, checked:false});
+    toast("Ajouté : "+freeName.trim());
+  }
+  saveState(); render();
+}
+
+/* ---- Autocomplete ---- */
+const input=$("#addInput"), sug=$("#suggest");
+function norm(s){ return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,""); }
+input.addEventListener("input", ()=>{
+  const q=norm(input.value);
+  if(q.length<1){ sug.hidden=true; return; }
+  const hits = DATA.catalog.filter(c=>norm(c.name).includes(q)).slice(0,7);
+  if(hits.length===0){ sug.hidden=true; return; }
+  sug.innerHTML = hits.map(c=>{
+    const best=bestStoreFor(c,1);
+    return `<button data-id="${c.id}"><span>${esc(c.name)} <span class="muted small">· ${esc(c.unit)}</span></span><b>${fmt(best.cost)}</b></button>`;
+  }).join("");
+  sug.hidden=false;
+  sug.querySelectorAll("button").forEach(b=>b.onclick=()=>{ addItem(b.dataset.id,null); input.value=""; sug.hidden=true; input.focus(); });
+});
+input.addEventListener("keydown", e=>{
+  if(e.key==="Enter"){ commitAdd(); }
+});
+document.addEventListener("click", e=>{ if(!e.target.closest(".addbar")) sug.hidden=true; });
+$("#addBtn").onclick=commitAdd;
+function commitAdd(){
+  const q=norm(input.value);
+  if(!q) return;
+  const exact = DATA.catalog.find(c=>norm(c.name)===q) || DATA.catalog.filter(c=>norm(c.name).includes(q))[0];
+  if(exact && norm(exact.name).includes(q)) addItem(exact.id,null);
+  else addItem(null, input.value);
+  input.value=""; sug.hidden=true;
+}
+
+/* ---- Comparateur ---- */
+function renderCompare(){
+  const body=$("#cmpBody");
+  const items=enrichedItems();
+  const comparable=items.filter(i=>i.cat);
+  if(items.length===0){
+    body.innerHTML=`<div class="empty"><div class="big">⚖️</div><b>Rien à comparer</b><div class="small">Ajoute d'abord des articles à ta liste.</div></div>`;
+    return;
+  }
+  const totals=storeTotals(items);
+  let html=`<div class="totalsGrid">`;
+  const min=Math.min(...DATA.stores.map(s=>totals[s.id].adj));
+  for(const s of DATA.stores){
+    const t=totals[s.id];
+    html+=`<div class="tstore" style="background:${s.color}${t.adj<=min+0.001?"":"cc"}">
+      <div class="tname">${esc(s.name)}${t.adj<=min+0.001?" 🏆":""}</div>
+      <div class="tval">${fmt(t.adj)}</div>
+      ${t.missing.length?`<div class="tmiss">${t.missing.length} indispo.*</div>`:""}
+    </div>`;
+  }
+  const anyMissing=DATA.stores.some(s=>totals[s.id].missing.length);
+  html+=`</div><div class="small muted" style="margin:0 4px 10px">Total si tu achetais toute la liste dans une seule enseigne (articles comparables : ${comparable.length}/${items.length}).${anyMissing?" * Articles indisponibles comptés au meilleur prix ailleurs.":""}</div>`;
+
+  for(const it of comparable){
+    const best=bestStoreFor(it.cat,it.qty);
+    html+=`<div class="card cmp">
+      <div class="cmpHead"><b>${esc(it.name)}</b><span class="qtyTag">${esc(it.cat.unit)} × ${it.qty}</span></div>
+      <div class="prow">`;
+    for(const s of DATA.stores){
+      const e=it.cat.prices[s.id];
+      const c=cost(e,it.qty);
+      if(c===null){
+        html+=`<div class="pcell na"><div class="sname">${esc(s.name)}</div><div class="pval">—</div><div class="punit">indispo.</div></div>`;
+      }else{
+        const isBest = best && Math.abs(c-best.cost)<0.001;
+        const hasPromo=!!e.promo;
+        html+=`<div class="pcell ${isBest?"best":""}">
+          <div class="sname">${esc(s.name)}</div>
+          <div class="pval">${hasPromo?`<span class="strike">${fmt(e.p*it.qty)}</span>`:""}${fmt(c)}</div>
+          <div class="punit">${fmt(c/it.qty)} / u.</div>
+          ${hasPromo?`<span class="promoTag">🏷 ${promoLabel(e.promo)}</span>`:""}
+        </div>`;
+      }
+    }
+    html+=`</div>`;
+    const alts=alternativesFor(it);
+    if(alts.length){
+      html+=`<div class="altBox">`+alts.map(a=>{
+        const e=a.c.prices[a.best.store.id];
+        const p=e&&e.promo;
+        return `<div class="alt">💡<span class="altTxt"><b>${esc(a.c.name)}</b> — ${fmt(a.best.cost)} chez ${esc(a.best.store.name)}${p?` <span class="promoTag">🏷 ${promoLabel(p)}</span>`:""}${a.save>0.001?` <span class="altSave">−${fmt(a.save)}</span>`:""}</span><button class="altBtn" data-swap="${it.uid}" data-to="${a.c.id}">Remplacer</button></div>`;
+      }).join("")+`</div>`;
+    }
+    html+=`</div>`;
+  }
+  const free=items.filter(i=>!i.cat);
+  if(free.length){
+    html+=`<div class="catTitle">Non comparés</div><div class="card small muted">${free.map(f=>esc(f.name)).join(", ")} — articles libres, sans correspondance dans le catalogue de prix.</div>`;
+  }
+  body.innerHTML=html;
+  body.querySelectorAll("[data-swap]").forEach(b=>b.onclick=()=>swapItem(b.dataset.swap, b.dataset.to));
+}
+
+/* ---- Paniers ---- */
+function renderBaskets(){
+  const body=$("#basketBody");
+  const items=enrichedItems();
+  if(items.filter(i=>i.cat).length===0){
+    body.innerHTML=`<div class="empty"><div class="big">🧺</div><b>Aucun panier à préparer</b><div class="small">Ajoute des articles comparables à ta liste.</div></div>`;
+    return;
+  }
+  const totals=storeTotals(items);
+  const split=optimalSplit(items);
+  const ranked=[...DATA.stores].sort((a,b)=>totals[a.id].adj-totals[b.id].adj);
+  const bestSingle=ranked[0];
+  const saving=totals[bestSingle.id].adj-split.total;
+
+  let html=`<div class="toggle">
+    <button class="${basketMode==="split"?"on":""}" data-mode="split">✂️ Répartition optimale</button>
+    <button class="${basketMode==="single"?"on":""}" data-mode="single">🏬 Magasin unique</button>
+  </div>`;
+
+  if(basketMode==="split"){
+    html+=`<div class="saveBox">
+      <div class="small muted">Total optimisé (${DATA.stores.filter(s=>split.baskets[s.id].length).length} enseigne(s))</div>
+      <div class="amt">${fmt(split.total)}</div>
+      <div class="small">soit <b>${fmt(Math.max(0,saving))}</b> d'économie vs tout acheter chez ${esc(bestSingle.name)} (${fmt(totals[bestSingle.id].adj)})</div>
+    </div>`;
+    for(const s of DATA.stores){
+      const arr=split.baskets[s.id];
+      if(!arr.length) continue;
+      const sub=arr.reduce((a,b)=>a+b.cost,0);
+      html+=`<div class="card basket" style="border-left-color:${s.color}">
+        <div class="bhead"><span class="bname" style="color:${s.color}">${esc(s.name)}</span><span class="btotal">${fmt(sub)}</span></div>
+        ${arr.map(it=>`<div class="bline"><span class="n">${esc(it.name)} <span class="muted">× ${it.qty}</span></span><span>${fmt(it.cost)}</span></div>`).join("")}
+        <div class="bactions">
+          <button data-copy="${s.id}">📋 Copier la liste</button>
+          <a href="${s.url}" target="_blank" rel="noopener">↗ Ouvrir ${esc(s.name)}</a>
+        </div>
+      </div>`;
+    }
+    if(split.unmatched.length){
+      html+=`<div class="card small muted">Non répartis : ${split.unmatched.map(f=>esc(f.name)).join(", ")}</div>`;
+    }
+  }else{
+    html+=`<div class="small muted" style="margin:0 4px 10px">Classement si tu fais toutes tes courses dans une seule enseigne :</div>`;
+    ranked.forEach((s,i)=>{
+      const t=totals[s.id];
+      html+=`<div class="card rank">
+        <div class="medal">${["🥇","🥈","🥉"][i]||"•"}</div>
+        <div class="rmain">
+          <b style="color:${s.color}">${esc(s.name)}</b>
+          ${t.missing.length?`<div class="small muted">Indisponible(s), compté(s) au meilleur prix ailleurs : ${t.missing.map(esc).join(", ")}</div>`:`<div class="small muted">Tous les articles disponibles</div>`}
+        </div>
+        <div class="rtotal">${fmt(t.adj)}</div>
+      </div>`;
+    });
+    html+=`<div class="card small muted">💡 Avec la répartition optimale, le total descend à <b>${fmt(split.total)}</b>.</div>`;
+  }
+  body.innerHTML=html;
+  body.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{ basketMode=b.dataset.mode; renderBaskets(); });
+  body.querySelectorAll("[data-copy]").forEach(b=>b.onclick=()=>copyBasket(b.dataset.copy));
+}
+
+function copyBasket(storeId){
+  const split=optimalSplit(enrichedItems());
+  const s=DATA.stores.find(x=>x.id===storeId);
+  const arr=split.baskets[storeId];
+  const txt=`Courses ${s.name} :\n`+arr.map(it=>`- ${it.name} × ${it.qty} (${fmt(it.cost)})`).join("\n")
+    +`\nTotal : ${fmt(arr.reduce((a,b)=>a+b.cost,0))}`;
+  (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(
+    ()=>toast("Liste "+s.name+" copiée ✓"),
+    ()=>toast("Copie impossible sur ce navigateur")
+  );
+}
+
+/* ---- Divers ---- */
+let toastT;
+function toast(msg){
+  const t=$("#toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),1800);
+}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>switchView(b.dataset.view));
+
+/* ---- Source de données ----------------------------------------
+   Priorité : 1) data/prix.csv (source de vérité, éditable dans Excel)
+              2) /api/prices (fonction Netlify)
+              3) données locales embarquées.
+   CSV : séparateur ";", décimales "," ou ".", prix vide = indisponible,
+   promo = "-20%" | "1+1" | "2e-50", date_releve vide = prix simulé. */
+function parseCSV(text){
+  text = text.replace(/^\uFEFF/,"");
+  const lines = text.split(/\r?\n/).filter(l=>l.trim());
+  if(lines.length<2) return {catalog:[], lastDate:""};
+  const head = lines[0].split(";").map(h=>h.trim().toLowerCase());
+  const idx = {}; head.forEach((h,i)=>idx[h]=i);
+  const num = v=>{
+    v=(v||"").trim().replace(/€/g,"").replace(/\s/g,"").replace(",",".");
+    if(!v) return null;
+    const f=parseFloat(v); return isNaN(f)?null:f;
+  };
+  const promo = v=>{
+    v=(v||"").trim().toLowerCase().replace(/\s/g,"");
+    if(!v) return null;
+    const m=v.match(/^-?(\d+)%$/); if(m) return {t:"pct",v:+m[1]};
+    if(v==="1+1") return {t:"1+1"};
+    if(v.startsWith("2e")||v.startsWith("2è")) return {t:"2e-50"};
+    return null;
+  };
+  const catalog=[]; let lastDate="";
+  for(let i=1;i<lines.length;i++){
+    const cells=lines[i].split(";");
+    const g=n=>{const j=idx[n]; return j===undefined?"":(cells[j]||"").trim();};
+    const name=g("nom"); if(!name) continue;
+    const id=g("id")||norm(name).replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
+    const prices={};
+    for(const s of ["delhaize","carrefour","colruyt"]){
+      const p=num(g("prix_"+s));
+      if(p===null){ prices[s]=null; continue; }
+      const pr=promo(g("promo_"+s));
+      prices[s]=pr?{p,promo:pr}:{p};
+    }
+    const d=g("date_releve");
+    if(d && d>lastDate) lastDate=d;
+    catalog.push({id, famille:g("famille")||id, name, unit:g("unite"),
+      cat:g("categorie")||"📝 Autres", prices, releve:d||null});
+  }
+  return {catalog, lastDate};
+}
+function setBadges(srcTxt, real){
+  $("#srcBadge").textContent = srcTxt;
+  const d=$("#demoBadge");
+  d.textContent = real ? "Prix relevés" : "Prix simulés";
+  d.classList.toggle("real", !!real);
+}
+async function loadData(){
+  // 1) CSV statique
+  try{
+    const r=await fetch("data/prix.csv");
+    if(r.ok){
+      const d=parseCSV(await r.text());
+      if(d.catalog.length){
+        DATA={stores:LOCAL_DATA.stores, catalog:d.catalog};
+        setBadges(d.lastDate?"CSV · relevé du "+d.lastDate:"CSV · simulé", !!d.lastDate);
+        render(); return;
+      }
+    }
+  }catch(e){}
+  // 2) Fonction Netlify
+  try{
+    const ctl=new AbortController();
+    const to=setTimeout(()=>ctl.abort(),4000);
+    const r=await fetch("/api/prices",{signal:ctl.signal});
+    clearTimeout(to);
+    if(r.ok){
+      const d=await r.json();
+      if(d && Array.isArray(d.catalog) && Array.isArray(d.stores)){
+        DATA=d;
+        setBadges("API"+(d.simulated?" · simulé":""), !d.simulated);
+        render(); return;
+      }
+    }
+  }catch(e){}
+  // 3) Fallback local
+  setBadges("Données locales · simulé", false);
+  render();
+}
+
+loadState();
+render();
+loadData();
+</script>
+</body>
+</html>
