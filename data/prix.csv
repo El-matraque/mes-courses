@@ -1,4 +1,4 @@
-﻿id;famille;nom;unite;categorie;prix_delhaize;promo_delhaize;prix_carrefour;promo_carrefour;prix_colruyt;promo_colruyt;date_releve
+id;famille;nom;unite;categorie;prix_delhaize;promo_delhaize;prix_carrefour;promo_carrefour;prix_colruyt;promo_colruyt;date_releve
 barilla-spaghetti5;pates;Barilla Spaghetti n°5;500 g;🥫 Épicerie;1,59;;1,59;;1,59;;2026-08-23
 barilla-spaghetti5-1kg;pates;Barilla Spaghetti n°5;1 kg;🥫 Épicerie;;;;;4,98;;2026-08-23
 barilla-spaghettoni7;pates;Barilla Spaghettoni n°7;500 g;🥫 Épicerie;1,99;;1,99;;1,99;;2026-08-23
@@ -27,22 +27,33 @@ barilla-spaghettoni-bronzo;pates;Barilla Spaghettoni Al Bronzo;500 g;🥫 Épice
 barilla-mezzi-rigatoni-bronzo;pates;Barilla Mezzi Rigatoni Al Bronzo;500 g;🥫 Épicerie;2,59;;;;;;2026-08-23
 barilla-penne-bronzo;pates;Barilla Penne rigate Al Bronzo;500 g;🥫 Épicerie;2,29;;;;;;2026-08-23
 barilla-fusilli-bronzo;pates;Barilla Fusilli Al Bronzo;500 g;🥫 Épicerie;2,29;;;;;;2026-08-23
-activia-yaourt-figue;yaourt;Activia yaourt figue;4 × 125 g;🥛 Crèmerie;;;;;3,19;;2026-08-24
-gran-soresina-padano-rape;rape;Gran Soresina Grana Padano AOP râpé;100 g;🥛 Crèmerie;;;;;1,99;;2026-08-24
-boni-bio-oeufs-m;oeufs;Boni Bio œufs frais M;12 pièces;🥛 Crèmerie;;;;;4,95;;2026-08-24
-garden-gourmet-tofu-basil;vege;Garden Gourmet Crunchy Tofu Basil;160 g;🥩 Viande & Poisson;;;;;3,29;;2026-08-24
-vivera-drumsticks;vege;Vivera Drumsticks végétaux 4 pc;216 g;🥩 Viande & Poisson;;;;;3,29;;2026-08-24
-laitue-iceberg;salade;Laitue iceberg;pièce;🍎 Fruits & Légumes;;;;;1,09;;2026-08-24
-boni-raisins-bleus;raisins;Boni raisins bleus sans pépins;400 g;🍎 Fruits & Légumes;;;;;2,59;;2026-08-24
-ail-frais;ail;Ail frais;1 kg;🍎 Fruits & Légumes;;;;;11,99;;2026-08-24
-poivrons-rouges;poivrons;Poivrons rouges;1 kg;🍎 Fruits & Légumes;;;;;2,69;;2026-08-24
-courgettes;courgettes;Courgettes;1 kg;🍎 Fruits & Légumes;;;;;1,69;;2026-08-24
-boni-bio-mousseline;compote;Boni Bio mousseline sans sucres ajoutés;350 g;🥫 Épicerie;;;;;1,29;;2026-08-24
-filippo-berio-huile-olive;huile;Filippo Berio huile d'olive extra vierge;1 L;🥫 Épicerie;;;;;14,99;;2026-08-24
-boni-plant-beurre-cacahuetes;beurre-cacahuete;Boni Plan't beurre de cacahuètes 100%;350 g;🥫 Épicerie;;;;;1,91;;2026-08-24
-materne-abricot-nectarine;confiture;Materne confiture abricot-nectarine -38% sucres;335 g;🥫 Épicerie;;;;;3,09;;2026-08-24
-galler-noir-85;chocolat;Galler chocolat noir 85% profond;80 g;🥫 Épicerie;;;;;2,95;;2026-08-24
-cereal-biscuits-citron-yuzu;biscuits;Céréal biscuits citron-yuzu;3 × 44 g;🥫 Épicerie;;;;;3,59;;2026-08-24
-van-houten-cacao;cacao;Van Houten Jacques cacao en poudre;250 g;🥫 Épicerie;;;;;7,39;;2026-08-24
-sanex-gel-douche-dry;geldouche;Sanex gel douche Skin Therapy Dry;450 ml;🧴 Hygiène & Entretien;;;;;4,99;;2026-08-24
-ultra-doux-shampooing-avocat;shampooing;Ultra Doux shampooing avocat & karité;300 ml;🧴 Hygiène & Entretien;;;;;4,31;-15%;2026-08-24
+activia-yaourt-figue;yaourt;Activia yaourt figue;4 × 125 g;🥛 Crèmerie;3,25;;3,19;;3,19;;2026-08-24
+gran-soresina-padano-rape;rape;Gran Soresina Grana Padano AOP râpé;100 g;🥛 Crèmerie;x;;x;;1,99;;2026-08-24
+boni-bio-oeufs-m;oeufs;Boni Bio œufs frais M;12 pièces;🥛 Crèmerie;x;;x;;4,95;;2026-08-24
+garden-gourmet-tofu-basil;vege;Garden Gourmet Crunchy Tofu Basil;160 g;🥩 Viande & Poisson;3,29;;3,65;;3,29;;2026-08-24
+vivera-drumsticks;vege;Vivera Drumsticks végétaux 4 pc;216 g;🥩 Viande & Poisson;x;;3,69;;3,29;;2026-08-24
+laitue-iceberg;salade;Laitue iceberg;pièce;🍎 Fruits & Légumes;1,29;-10%;1,19;;1,09;;2026-08-24
+boni-raisins-bleus;raisins;Boni raisins bleus sans pépins;400 g;🍎 Fruits & Légumes;x;;x;;2,59;;2026-08-24
+ail-frais;ail;Ail frais;1 kg;🍎 Fruits & Légumes;x;;7,99;;11,99;;2026-08-24
+poivrons-rouges;poivrons;Poivrons rouges;1 kg;🍎 Fruits & Légumes;x;;3,49;;2,69;;2026-08-24
+courgettes;courgettes;Courgettes;1 kg;🍎 Fruits & Légumes;x;;1,99;;1,69;;2026-08-24
+boni-bio-mousseline;compote;Boni Bio mousseline sans sucres ajoutés;350 g;🥫 Épicerie;x;;x;;1,29;;2026-08-24
+filippo-berio-huile-olive;huile;Filippo Berio huile d'olive extra vierge;1 L;🥫 Épicerie;x;;x;;14,99;;2026-08-24
+boni-plant-beurre-cacahuetes;beurre-cacahuete;Boni Plan't beurre de cacahuètes 100%;350 g;🥫 Épicerie;x;;x;;1,91;;2026-08-24
+materne-abricot-nectarine;confiture;Materne confiture abricot-nectarine -38% sucres;335 g;🥫 Épicerie;3,65;;3,09;;3,09;;2026-08-24
+galler-noir-85;chocolat;Galler chocolat noir 85% profond;80 g;🥫 Épicerie;2,95;;2,95;;2,95;;2026-08-24
+cereal-biscuits-citron-yuzu;biscuits;Céréal biscuits citron-yuzu;3 × 44 g;🥫 Épicerie;3,59;;x;;3,59;;2026-08-24
+van-houten-cacao;cacao;Van Houten Jacques cacao en poudre;250 g;🥫 Épicerie;x;;x;;7,39;;2026-08-24
+sanex-gel-douche-dry;geldouche;Sanex gel douche Skin Therapy (variante selon enseigne);450 ml;🧴 Hygiène & Entretien;7,69;;7,69;;4,99;;2026-08-24
+ultra-doux-shampooing-avocat;shampooing;Ultra Doux shampooing avocat & karité;300 ml;🧴 Hygiène & Entretien;4,95;;5,09;;4,31;-15%;2026-08-24
+delhaize-grana-padano-rape;rape;Delhaize Grana Padano AOP râpé;100 g;🥛 Crèmerie;1,99;;x;;x;;2026-08-24
+carrefour-grana-padano-rape;rape;Carrefour Extra Grana Padano râpé;100 g;🥛 Crèmerie;x;;1,99;;x;;2026-08-24
+giovanni-ferrari-grana-riserva;rape;Giovanni Ferrari Grana Padano Riserva 20M râpé;60 g;🥛 Crèmerie;2,49;;;;;;2026-08-24
+delhaize-oeufs-bio-12;oeufs;Delhaize œufs bio calibres différents;12 pièces;🥛 Crèmerie;4,95;;;;x;;2026-08-24
+delhaize-ail-frais;ail;Delhaize ail frais;pièce;🍎 Fruits & Légumes;2,49;-10%;;;x;;2026-08-24
+delhaize-poivron-rouge;poivrons;Delhaize poivron rouge;pièce;🍎 Fruits & Légumes;0,79;-10%;;;x;;2026-08-24
+delhaize-courgette;courgettes;Delhaize courgette;pièce;🍎 Fruits & Légumes;0,75;-10%;;;x;;2026-08-24
+materne-mousseline-pomme-abricot;compote;Materne mousseline pomme-abricots;370 g;🥫 Épicerie;2,19;;;;;;2026-08-24
+filippo-berio-huile-olive-75cl;huile;Filippo Berio huile d'olive extra vierge;75 cl;🥫 Épicerie;11,99;;x;;x;;2026-08-24
+filippo-berio-huile-olive-50cl;huile;Filippo Berio huile d'olive extra vierge;50 cl;🥫 Épicerie;8,85;;8,99;;x;;2026-08-24
+jacques-cacao;cacao;Jacques cacao en poudre;250 g;🥫 Épicerie;7,39;;x;;x;;2026-08-24
