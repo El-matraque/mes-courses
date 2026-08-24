@@ -452,6 +452,25 @@
   }
   .prixBar{margin-bottom:14px}
   .prixBar button{font-size:12.5px; padding:9px 4px}
+
+  [hidden]{display:none !important}  /* .toggle etc. posent display:flex, qui battrait l'attribut hidden */
+
+  /* ---- IA v3 : barre de coût, ligne d'info données, tuiles spéciales ---- */
+  .costBar{
+    display:flex; align-items:center; justify-content:center; gap:7px; flex-wrap:wrap;
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius-s);
+    padding:9px 10px; margin-bottom:13px; box-shadow:var(--shadow);
+    font-size:13.5px; font-variant-numeric:tabular-nums;
+  }
+  .costBar .cbDone{color:var(--accent-deep); font-weight:800}
+  .costBar .cbLbl{font-size:10.5px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em}
+  .costBar .cbSep{color:var(--line)}
+  .dataInfo{text-align:center; margin:0 4px 10px}
+  .tile.plus{border-style:dashed; box-shadow:none; background:transparent}
+  .tile.plus .tIni{background:transparent; border:1.5px dashed var(--accent-ring); color:var(--accent-deep)}
+  .tile.edit{border-color:var(--accent-ring)}
+  .tile.edit .tIni{background:#fff7e0; color:#9a6b00}
+  .stkTools button.editOn{background:var(--accent-soft); border-color:var(--accent-ring); color:var(--accent-deep)}
 </style>
 </head>
 <body>
@@ -461,8 +480,6 @@
     <h1>Mes Courses</h1>
     <div class="badges">
       <button class="badge sync off" id="syncBadge" title="Synchronisation entre appareils">Sync off</button>
-      <span class="badge demo" id="demoBadge">Prix simulés</span>
-      <span class="badge src" id="srcBadge">…</span>
     </div>
   </div>
 </header>
@@ -489,16 +506,22 @@
     <div id="catBody"></div>
   </section>
 
+  <section id="view-produits" hidden>
+    <div class="addbar">
+      <div class="addrow">
+        <input id="prodSearch" type="text" placeholder="Chercher un produit…" autocomplete="off" enterkeyhint="search">
+      </div>
+    </div>
+    <div id="prodBody"></div>
+  </section>
+
+  <div class="small muted dataInfo" id="dataInfo" hidden></div>
   <div class="toggle prixBar" id="prixBar" hidden>
     <button data-sub="promos">Promos</button>
     <button data-sub="comparer">Comparer</button>
     <button data-sub="paniers">Paniers</button>
     <button data-sub="catalogue">Catalogue</button>
   </div>
-
-  <section id="view-stock" hidden>
-    <div id="stockBody"></div>
-  </section>
 
   <section id="view-promos" hidden>
     <div id="promoBody"></div>
@@ -514,7 +537,8 @@
 </main>
 
 <nav>
-  <button data-view="liste" class="on"><span class="ico" data-i="cart"></span>Courses<span class="cnt" id="navCnt" hidden></span></button>
+  <button data-view="liste" class="on"><span class="ico" data-i="cart"></span>Liste<span class="cnt" id="navCnt" hidden></span></button>
+  <button data-view="produits"><span class="ico" data-i="grid"></span>Produits</button>
   <button data-view="prix"><span class="ico" data-i="tag"></span>Prix<span class="cnt" id="navPromo" hidden></span></button>
 </nav>
 
@@ -825,7 +849,7 @@ function applyRefill(batch){
   }
   stock.refillsDone.push(batch);
   saveStock(); render();
-  toast(added ? `${added} produit(s) ajoutés aux favoris` : "Produits déjà dans les favoris");
+  toast(added ? `${added} produit(s) ajoutés à votre base` : "Produits déjà dans votre base");
 }
 function dismissRefill(batch){
   stock.refillsDone.push(batch);
@@ -843,6 +867,7 @@ const I = {
   bag:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>',
   camera:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3.2"/></svg>',
   receipt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><path d="M14 8H8"/><path d="M16 12H8"/></svg>',
+  grid:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></svg>',
   star:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2.5 2.94 5.96 6.58.96-4.76 4.64 1.12 6.55L12 17.52l-5.88 3.09 1.12-6.55-4.76-4.64 6.58-.96L12 2.5z"/></svg>',
   search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7.5"/><path d="m21 21-4.3-4.3"/></svg>',
 };
@@ -1156,10 +1181,8 @@ function swapItem(uid, toId){
 }
 
 /* ============================ VUES ============================ */
-/* Deux onglets seulement : Courses (liste + favoris + gestion) et Prix
-   (l'outillage d'analyse — promos, comparateur, paniers, catalogue — en
-   sous-onglets). L'app du quotidien tient sur un écran ; le reste est là
-   pour Enzo et Claude. */
+/* Trois écrans, un rôle chacun : Liste coche, Produits ajoute, Prix
+   analyse (promos, comparateur, paniers, catalogue en sous-onglets). */
 const PRIX_SUBS=["promos","comparer","paniers","catalogue"];
 let prixSub="promos";
 function switchView(v){
@@ -1168,12 +1191,13 @@ function switchView(v){
   view=v;
   const isPrix=PRIX_SUBS.includes(v);
   for(const b of document.querySelectorAll("nav button"))
-    b.classList.toggle("on", b.dataset.view==="prix" ? isPrix : (v==="liste"||v==="stock"));
+    b.classList.toggle("on", b.dataset.view==="prix" ? isPrix : b.dataset.view===v);
   const bar=$("#prixBar");
   bar.hidden=!isPrix;
+  $("#dataInfo").hidden=!isPrix;
   bar.querySelectorAll("button").forEach(b=>b.classList.toggle("on", b.dataset.sub===prixSub));
   $("#view-liste").hidden = v!=="liste";
-  $("#view-stock").hidden = v!=="stock";
+  $("#view-produits").hidden = v!=="produits";
   $("#view-catalogue").hidden = v!=="catalogue";
   $("#view-promos").hidden = v!=="promos";
   $("#view-comparer").hidden = v!=="comparer";
@@ -1190,100 +1214,21 @@ function render(){
   const pb=$("#navPromo");
   pb.hidden = deals===0; pb.textContent=deals;
   if(view==="liste") renderList();
-  if(view==="stock") renderStock();
+  if(view==="produits") renderProduits();
   if(view==="catalogue") renderCatalogue();
   if(view==="promos") renderPromos();
   if(view==="comparer") renderCompare();
   if(view==="paniers") renderBaskets();
 }
 
-/* ---- Écran Courses : grille de favoris façon Bring ------------------
-   Le geste unique du quotidien : une tuile par produit du foyer,
-   tap = sur la liste (tuile verte, ✓), re-tap = retirée. La gestion
-   (scan, édition, tickets, export) vit sur la page Favoris, accessible
-   par « Gérer » — hors de la navigation principale. */
-function favListItem(f){
-  const m=favCatalogMatch(f);
-  return m ? state.items.find(i=>i.catalogId===m.id)
-           : state.items.find(i=>!i.catalogId && i.name===f.nom);
-}
-function toggleFavInList(id){
-  const f=stockItem(id); if(!f) return;
-  const it=favListItem(f);
-  if(it){
-    state.items=state.items.filter(i=>i!==it);
-    saveState(); render(); toast("Retiré : "+f.nom);
-  }else{
-    addFavToList(id);
-  }
-}
-function tileLabel(nom){
-  /* nom court : sans le format entre parenthèses ni les grammages */
-  return nom.replace(/\s*\([^)]*\)\s*/g," ").replace(/\s*\d+\s*[×x]?\s*\d*\s*(g|kg|ml|cl|l)\b/gi,"").trim() || nom;
-}
-function favGridHtml(){
-  const favs=stockItems().sort((a,b)=>a.nom.localeCompare(b.nom,"fr"));
-  let out=`<div class="favHead">
-    <span class="favTitle">Vos produits</span>
-    <button class="iconBtn" id="quickScan" aria-label="Scanner">${I.camera}</button>
-    <button class="linkBtn" id="manageFavs">Gérer</button>
-  </div>`;
-  if(!favs.length){
-    out+=`<div class="card small muted">Ta base de produits est vide. Scanne les paquets de la maison ou photographie un ticket pour Claude — chaque produit deviendra une tuile à taper.</div>`;
-    return out;
-  }
-  out+=`<div class="favGrid">`+favs.map(f=>{
-    const inList=!!favListItem(f);
-    const lbl=tileLabel(f.nom);
-    return `<button class="tile ${inList?"in":""}" data-tile="${esc(f.id)}">
-      <span class="tIni">${inList?"✓":esc(lbl.charAt(0).toUpperCase())}</span>
-      <span class="tName">${esc(lbl)}</span>
-    </button>`;
-  }).join("")+`</div>`;
-  return out;
-}
-function bindFavGrid(body){
-  body.querySelectorAll("[data-tile]").forEach(b=>b.onclick=()=>toggleFavInList(b.dataset.tile));
-  const on=(sel,fn)=>{ const el=body.querySelector(sel); if(el) el.onclick=fn; };
-  on("#quickScan", openScanner);
-  on("#manageFavs", ()=>switchView("stock"));
-}
-function refillCardsHtml(){
-  let out="";
-  for(const [batch,rows] of pendingRefills()){
-    out+=`<div class="card refillCard">
-      <b class="rcpt">${I.receipt} ${esc(batch)}</b>
-      <div class="small" style="margin:6px 0 8px">${rows.map(r=>{
-        const p=stockItem(r.poste);
-        return `${esc(p?p.nom:r.nom)}${p?"":" <span class='muted'>(nouveau)</span>"}`;
-      }).join(" · ")}</div>
-      <div class="bactions">
-        <button class="primaryBtn" data-refill="${esc(batch)}">Ajouter aux favoris</button>
-        <button data-norefill="${esc(batch)}">Ignorer</button>
-      </div>
-    </div>`;
-  }
-  return out;
-}
-function bindRefillCards(body){
-  body.querySelectorAll("[data-refill]").forEach(b=>b.onclick=()=>applyRefill(b.dataset.refill));
-  body.querySelectorAll("[data-norefill]").forEach(b=>b.onclick=()=>dismissRefill(b.dataset.norefill));
-}
-
-/* ---- Favoris ------------------------------------------------------
-   Pivot assumé : le suivi des quantités ("il reste 1,5 kg de pâtes")
-   est mort-né — personne ne décompte ce qu'il mange. Cet onglet est
-   donc devenu la BASE DES PRODUITS DU FOYER : ce qu'on aime et qu'on
-   rachète. On l'enrichit par scan et par ticket, et on remplit la
-   liste de courses depuis ici, en un tap.
-   Les structures de données (stock.custom, stock.ean…) sont conservées
-   à l'identique : la synchro et les anciens appareils restent valides ;
-   qty et seuil existent toujours mais ne sont plus ni saisis ni montrés. */
-let stockEdit = null;    // id du favori en cours d'édition, ou "new"
+/* ==================== ÉCRAN PRODUITS ====================
+   Une logique par écran : PRODUITS ajoute, LISTE coche, PRIX analyse.
+   Ici : la base des produits du foyer en tuiles (tap = sur la liste,
+   re-tap = retirée), la recherche, le scanner, le mode édition (✎),
+   les tickets lus par Claude, et l'export vers Claude.               */
 
 /* Rapproche un favori du catalogue de prix : par nom (inclusion dans un
-   sens ou l'autre), sinon par famille. Rend l'ajout à la liste "chiffré"
-   dès que le catalogue connaît le produit. */
+   sens ou l'autre), par recouvrement de mots, sinon par famille. */
 function favCatalogMatch(f){
   const n = norm(f.nom);
   let hit = DATA.catalog.find(c => {
@@ -1291,9 +1236,6 @@ function favCatalogMatch(f){
     return cn && (n.includes(cn) || cn.includes(n));
   });
   if(!hit){
-    /* l'ordre des mots diffère souvent entre le ticket ("Chocolat noir 85%
-       (Galler)") et le catalogue ("Galler chocolat noir 85% profond") :
-       on rapproche par recouvrement de mots significatifs. */
     const toks = s => new Set(norm(s).split(/[^a-z0-9%]+/).filter(t=>t.length>2 || /\d/.test(t)));
     const ft = toks(f.nom);
     let bestScore = 0.69;
@@ -1316,87 +1258,43 @@ function favCatalogMatch(f){
   }
   return hit||null;
 }
+function favListItem(f){
+  const m=favCatalogMatch(f);
+  return m ? state.items.find(i=>i.catalogId===m.id)
+           : state.items.find(i=>!i.catalogId && i.name===f.nom);
+}
 function addFavToList(id){
   const f = stockItem(id); if(!f) return;
   const m = favCatalogMatch(f);
   if(m){ addItem(m.id, null); } else { addItem(null, f.nom); }
 }
-function favRow(f){
-  const m = favCatalogMatch(f);
-  const best = m ? bestStoreFor(m,1) : null;
-  const inList = state.items.some(i => (m && i.catalogId===m.id) || (!i.catalogId && i.name===f.nom));
-  const price = best ? `dès <b>${fmt(best.cost)}</b> chez ${esc(best.store.name)}` : `pas encore de prix relevé`;
-  return `<div class="prod">
-    <div class="pmain">
-      <div class="pname">${esc(f.nom)}</div>
-      <div class="psub">${price}</div>
-    </div>
-    <button class="linkBtn" data-seuil="${esc(f.id)}">modifier</button>
-    <button class="addP ${inList?"in":""}" data-fav="${esc(f.id)}" aria-label="Ajouter ${esc(f.nom)} à la liste">${inList?"✓":"+"}</button>
-  </div>`;
+function toggleFavInList(id){
+  const f=stockItem(id); if(!f) return;
+  const it=favListItem(f);
+  if(it){
+    state.items=state.items.filter(i=>i!==it);
+    saveState(); render(); toast("Retiré : "+f.nom);
+  }else{
+    addFavToList(id);
+  }
 }
-function renderStock(){
-  const body=$("#stockBody");
-  const items=stockItems();
-
-  let html=`<button class="backLink" id="backCourses">‹ Retour aux courses</button>
-  <div class="stkTools">
-    <button class="primaryBtn" id="scanBtn">${I.camera} Scanner un produit</button>
-    <button id="newPoste">+ Nouveau favori</button>
-  </div>`;
-
-  if(stockEdit) html+=posteForm();
-
-  /* Tickets lus par Claude : leurs produits rejoignent la base */
-  for(const [batch,rows] of pendingRefills()){
-    html+=`<div class="card refillCard">
-      <b class="rcpt">${I.receipt} ${esc(batch)}</b>
-      <div class="small" style="margin:6px 0 8px">${rows.map(r=>{
-        const p=stockItem(r.poste);
-        return `${esc(p?p.nom:r.nom)}${p?"":" <span class='muted'>(nouveau)</span>"}`;
-      }).join(" · ")}</div>
-      <div class="bactions">
-        <button class="primaryBtn" data-refill="${esc(batch)}">Ajouter aux favoris</button>
-        <button data-norefill="${esc(batch)}">Ignorer</button>
-      </div>
-    </div>`;
-  }
-
-  if(items.length===0 && !stockEdit){
-    html+=`<div class="empty"><div class="big">${I.star}</div><b>Aucun favori pour l'instant</b>
-      <div class="small">Cette base rassemble les produits que vous aimez et rachetez. Remplis-la en scannant les paquets de la maison, en photographiant un ticket pour Claude, ou à la main — puis ajoute-les à la liste en un tap.</div></div>`;
-    body.innerHTML=html;
-    bindStock(body);
-    return;
-  }
-
-  const byCat=new Map();
-  for(const p of items){
-    const k=p.categorie||"📦 Divers";
-    if(!byCat.has(k)) byCat.set(k,[]);
-    byCat.get(k).push(p);
-  }
-  for(const [cat,arr] of [...byCat.entries()].sort((a,b)=>a[0].localeCompare(b[0],"fr"))){
-    html+=`<div class="catTitle">${esc(cat)}</div>`;
-    html+=arr.sort((a,b)=>a.nom.localeCompare(b.nom,"fr")).map(favRow).join("");
-  }
-  html+=`<div class="card"><div class="bactions">
-    <button id="exportStock">Exporter les favoris</button>
-  </div><div class="small muted" style="margin-top:6px">L'export produit la liste complète (noms, catégories, codes-barres) à transmettre à Claude — c'est ce qui lui permet de connaître vos produits.</div></div>`;
-  html+=`<div id="exportBox"></div>`;
-  body.innerHTML=html;
-  bindStock(body);
+function tileLabel(nom){
+  return nom.replace(/\s*\([^)]*\)\s*/g," ").replace(/\s*\d+\s*[×x]?\s*\d*\s*(g|kg|ml|cl|l)\b/gi,"").trim() || nom;
 }
-function posteForm(){
+function isCustomPoste(id){ return stock.custom.some(p=>p.id===id); }
+
+let prodQuery="", prodEdit=false, stockEdit=null;   // stockEdit : id en édition, ou "new"
+
+function favForm(){
   const isNew = stockEdit==="new";
-  const p = isNew ? {id:"",nom:"",categorie:"",famille:""} : stockItem(stockEdit)||{};
+  const p = isNew ? {nom:"",categorie:""} : stockItem(stockEdit)||{};
   const editable = isNew || isCustomPoste(stockEdit);
   return `<div class="card posteForm">
-    <b>${isNew?"Nouveau favori":"Modifier « "+esc(p.nom)+" »"}</b>
+    <b>${isNew?"Nouveau produit":"Modifier « "+esc(p.nom)+" »"}</b>
     ${editable?`
       <label>Nom (marque + produit) <input id="pfNom" type="text" placeholder="ex : Barilla Spaghetti n°5" value="${esc(p.nom)}"></label>
-      <label>Catégorie <input id="pfCat" type="text" placeholder="ex : Épicerie" value="${esc(p.categorie)}"></label>`
-    :`<div class="small muted" style="margin-top:6px">Ce favori vient de <code>data/stock.csv</code> — il se modifie dans le repo (demande à Claude).</div>`}
+      <label>Catégorie <input id="pfCat" type="text" placeholder="ex : Épicerie" value="${esc(stripEmoji(p.categorie||""))}"></label>`
+    :`<div class="small muted" style="margin-top:6px">Ce produit vient de <code>data/stock.csv</code> — il se modifie dans le repo (demande à Claude).</div>`}
     <div class="bactions">
       ${editable?`<button id="pfSave" class="primaryBtn">Enregistrer</button>`:""}
       ${!isNew && editable?`<button id="pfDelete" style="color:var(--danger)">Supprimer</button>`:""}
@@ -1404,39 +1302,129 @@ function posteForm(){
     </div>
   </div>`;
 }
-function isCustomPoste(id){ return stock.custom.some(p=>p.id===id); }
-function bindStock(body){
+function refillCardsHtml(){
+  let out="";
+  for(const [batch,rows] of pendingRefills()){
+    out+=`<div class="card refillCard">
+      <b class="rcpt">${I.receipt} ${esc(batch)}</b>
+      <div class="small" style="margin:6px 0 8px">${rows.map(r=>{
+        const p=stockItem(r.poste);
+        return `${esc(p?p.nom:r.nom)}${p?"":" <span class='muted'>(nouveau)</span>"}`;
+      }).join(" · ")}</div>
+      <div class="bactions">
+        <button class="primaryBtn" data-refill="${esc(batch)}">Ajouter aux produits</button>
+        <button data-norefill="${esc(batch)}">Ignorer</button>
+      </div>
+    </div>`;
+  }
+  return out;
+}
+function bindRefillCards(body){
+  body.querySelectorAll("[data-refill]").forEach(b=>b.onclick=()=>applyRefill(b.dataset.refill));
+  body.querySelectorAll("[data-norefill]").forEach(b=>b.onclick=()=>dismissRefill(b.dataset.norefill));
+}
+
+function renderProduits(){
+  const body=$("#prodBody");
+  const q=norm(prodQuery.trim());
+  let html="";
+
+  /* actions : scanner (le geste principal d'enrichissement) + mode édition */
+  html+=`<div class="stkTools">
+    <button class="primaryBtn" id="scanBtn">${I.camera} Scanner un produit</button>
+    <button id="prodEditBtn" class="${prodEdit?"editOn":""}">${prodEdit?"Terminer l'édition":"✎ Modifier"}</button>
+  </div>`;
+
+  if(stockEdit) html+=favForm();
+  html+=refillCardsHtml();
+
+  const favs=stockItems().filter(f=>!q || norm(f.nom).includes(q));
+  if(!stockItems().length){
+    html+=`<div class="empty"><div class="big">${I.grid}</div><b>Aucun produit pour l'instant</b>
+      <div class="small">Cette base rassemble ce que vous aimez et rachetez. Scanne les paquets de la maison ou photographie un ticket pour Claude — chaque produit deviendra une tuile.</div></div>`;
+  }else{
+    const byCat=new Map();
+    for(const f of favs){
+      const k=stripEmoji(f.categorie||"Divers")||"Divers";
+      if(!byCat.has(k)) byCat.set(k,[]);
+      byCat.get(k).push(f);
+    }
+    if(!favs.length){
+      html+=`<div class="empty" style="padding:26px"><b>Rien ne correspond à « ${esc(prodQuery)} »</b></div>`;
+    }
+    for(const [cat,arr] of [...byCat.entries()].sort((a,b)=>a[0].localeCompare(b[0],"fr"))){
+      html+=`<div class="catTitle">${esc(cat)}</div><div class="favGrid">`;
+      html+=arr.sort((a,b)=>a.nom.localeCompare(b.nom,"fr")).map(f=>{
+        const inList=!!favListItem(f);
+        const lbl=tileLabel(f.nom);
+        return `<button class="tile ${inList?"in":""} ${prodEdit?"edit":""}" data-tile="${esc(f.id)}">
+          <span class="tIni">${prodEdit?"✎":(inList?"✓":esc(lbl.charAt(0).toUpperCase()))}</span>
+          <span class="tName">${esc(lbl)}</span>
+        </button>`;
+      }).join("");
+      html+=`</div>`;
+    }
+    /* tuile de création, toujours en fin */
+    html+=`<div class="favGrid" style="margin-top:9px"><button class="tile plus" id="newFav">
+      <span class="tIni">+</span><span class="tName">Nouveau produit</span></button></div>`;
+  }
+
+  /* recherche : le catalogue de prix connaît peut-être des produits
+     qui ne sont pas encore dans la base — on les propose à l'ajout direct */
+  if(q){
+    const favIds=new Set(stockItems().map(f=>{ const m=favCatalogMatch(f); return m?m.id:null; }));
+    const extra=DATA.catalog.filter(c=>norm(c.name).includes(q) && !favIds.has(c.id)).slice(0,6);
+    if(extra.length){
+      html+=`<div class="catTitle">Dans le catalogue de prix</div>`;
+      html+=extra.map(c=>{
+        const best=bestStoreFor(c,1);
+        const inList=state.items.some(i=>i.catalogId===c.id);
+        return `<div class="prod">
+          <div class="pmain"><div class="pname">${esc(c.name)}</div>
+          <div class="psub">${esc(c.unit||"")}${best?` · dès <b>${fmt(best.cost)}</b> chez ${esc(best.store.name)}`:""}</div></div>
+          <button class="addP ${inList?"in":""}" data-addcat="${esc(c.id)}">${inList?"✓":"+"}</button>
+        </div>`;
+      }).join("");
+    }
+  }
+
+  html+=`<div class="small muted" style="text-align:center; margin:18px 0 6px">
+    <button class="linkBtn" id="exportStock">Exporter les produits pour Claude</button></div><div id="exportBox"></div>`;
+
+  body.innerHTML=html;
   const on=(sel,fn)=>{ const el=body.querySelector(sel); if(el) el.onclick=fn; };
-  on("#backCourses", ()=>switchView("liste"));
   on("#scanBtn", openScanner);
-  on("#newPoste", ()=>{ stockEdit="new"; renderStock(); });
-  on("#pfCancel", ()=>{ stockEdit=null; renderStock(); });
+  on("#prodEditBtn", ()=>{ prodEdit=!prodEdit; stockEdit=null; renderProduits(); });
+  on("#newFav", ()=>{ stockEdit="new"; renderProduits(); });
+  on("#pfCancel", ()=>{ stockEdit=null; renderProduits(); });
   on("#pfSave", ()=>{
     const nom=((body.querySelector("#pfNom")||{}).value||"").trim();
     if(!nom){ toast("Il faut un nom"); return; }
-    const cat=((body.querySelector("#pfCat")||{}).value||"📦 Divers").trim();
+    const cat=((body.querySelector("#pfCat")||{}).value||"Divers").trim();
     if(stockEdit==="new"){
       const id=slugify(nom)||("fav-"+stock.custom.length);
-      if(stockItem(id)){ toast("Ce favori existe déjà"); return; }
+      if(stockItem(id)){ toast("Ce produit existe déjà"); return; }
       stock.custom.push({id, nom, categorie:cat, unite:"pièce", seuil:0, famille:"", note:""});
     }else if(isCustomPoste(stockEdit)){
       const c=stock.custom.find(p=>p.id===stockEdit);
       c.nom=nom; c.categorie=cat;
     }
-    stockEdit=null; saveStock(); render(); toast("Favori enregistré");
+    stockEdit=null; saveStock(); render(); toast("Produit enregistré");
   });
   on("#pfDelete", ()=>{
     const id=stockEdit;
     stock.custom=stock.custom.filter(p=>p.id!==id);
     delete stock.qty[id]; delete stock.seuil[id];
     for(const [ean,pid] of Object.entries(stock.ean)) if(pid===id) delete stock.ean[ean];
-    stockEdit=null; saveStock(); render(); toast("Favori supprimé");
+    stockEdit=null; saveStock(); render(); toast("Produit supprimé");
   });
-  body.querySelectorAll("[data-seuil]").forEach(b=>b.onclick=()=>{ stockEdit=b.dataset.seuil; renderStock(); });
-  body.querySelectorAll("[data-fav]").forEach(b=>b.onclick=()=>{ addFavToList(b.dataset.fav); renderStock(); });
+  body.querySelectorAll("[data-tile]").forEach(b=>b.onclick=()=>{
+    if(prodEdit){ stockEdit=b.dataset.tile; renderProduits(); window.scrollTo(0,0); }
+    else toggleFavInList(b.dataset.tile);
+  });
+  body.querySelectorAll("[data-addcat]").forEach(b=>b.onclick=()=>{ addItem(b.dataset.addcat,null); renderProduits(); });
+  bindRefillCards(body);
   on("#exportStock", showStockExport);
-  body.querySelectorAll("[data-refill]").forEach(b=>b.onclick=()=>applyRefill(b.dataset.refill));
-  body.querySelectorAll("[data-norefill]").forEach(b=>b.onclick=()=>dismissRefill(b.dataset.norefill));
 }
 function showStockExport(){
   const box=$("#exportBox");
@@ -1446,14 +1434,14 @@ function showStockExport(){
     rows.push([p.id,p.nom,stripEmoji(p.categorie||""),p.famille||"",eansOf(p.id)].join(";"));
   const csv=rows.join("\n");
   box.innerHTML=`<div class="card">
-    <b>Favoris au format CSV</b>
-    <div class="small muted" style="margin:4px 0 8px">À transmettre à Claude pour qu'il connaisse vos produits (et leurs codes-barres).</div>
+    <b>Vos produits au format CSV</b>
+    <div class="small muted" style="margin:4px 0 8px">À transmettre à Claude pour ses relevés de prix (noms, catégories, codes-barres).</div>
     <textarea class="exportTa" readonly rows="8">${esc(csv)}</textarea>
     <div class="bactions"><button id="copyStock">Copier</button><button id="closeExport">Fermer</button></div>
   </div>`;
   box.querySelector("#copyStock").onclick=()=>{
     (navigator.clipboard?navigator.clipboard.writeText(csv):Promise.reject())
-      .then(()=>toast("Favoris copiés ✓"), ()=>toast("Copie impossible — sélectionne le texte"));
+      .then(()=>toast("Copié ✓"), ()=>toast("Copie impossible — sélectionne le texte"));
   };
   box.querySelector("#closeExport").onclick=()=>{ box.innerHTML=""; };
   box.scrollIntoView({behavior:"smooth", block:"nearest"});
@@ -1592,7 +1580,7 @@ async function handleBarcode(code){
     if(p){
       lastAction={posteId:p.id, code, created:false, listed:false};
       beep(false);
-      scanFeedback(`✓ ${p.nom} — déjà dans vos favoris`, {listable:true});
+      scanFeedback(`✓ ${p.nom} — déjà dans vos produits`, {listable:true});
       return;
     }
     delete stock.ean[code];          // le favori a disparu, on oublie le lien
@@ -1614,7 +1602,7 @@ async function handleBarcode(code){
     lastAction={posteId:id, code, created:!existed, listed:false};
     saveStock(); render();
     beep(true);
-    scanFeedback(`Ajouté aux favoris : ${label}`, {correctable:true, listable:true});
+    scanFeedback(`Ajouté à vos produits : ${label}`, {correctable:true, listable:true});
   }finally{
     lastScanAt[code]=Date.now();     // le lookup a pu durer : on repart de la fin
     scanBusy=false;
@@ -1632,7 +1620,7 @@ function scanFeedback(msg, opts){
     ${o.quiet?"":`<div class="scanActions">
       ${lastAction?`<button id="scanUndo">↩︎ Annuler</button>`:""}
       ${o.listable?`<button id="scanToList">+ Mettre sur la liste</button>`:""}
-      ${o.correctable?`<button id="scanRelink">C'est un doublon d'un favori</button>`:""}
+      ${o.correctable?`<button id="scanRelink">C'est un doublon d'un produit</button>`:""}
     </div>`}
     <div class="manual">
       <input id="scanManual" type="text" inputmode="numeric" placeholder="ou tape le code-barres (13 chiffres)">
@@ -1678,7 +1666,7 @@ function askRelink(action){
   const others=stockItems().filter(p=>p.id!==action.posteId);
   if(!others.length){ scanFeedback("Aucun autre poste. Continue à scanner.", {quiet:true}); return; }
   foot.innerHTML=`
-    <div class="scanMsg" id="scanMsg">Ce code correspond à quel favori ?</div>
+    <div class="scanMsg" id="scanMsg">Ce code correspond à quel produit ?</div>
     <div class="manual" style="flex-direction:column; gap:6px">
       ${others.map(p=>`<button class="stapleOpt" data-st="${esc(p.id)}" style="width:100%">${esc(p.nom)}</button>`).join("")}
       <button class="stapleOpt" data-cancel="1" style="width:100%; background:#333">Laisser tel quel</button>
@@ -1857,16 +1845,17 @@ function popularPicks(n){
 }
 function renderList(){
   const body=$("#listBody");
-  const sug = refillCardsHtml() + suggestionsHtml();
+  const sug = suggestionsHtml();
   if(state.items.length===0){
     body.innerHTML = sug + `
-      <div class="empty" style="padding:26px 18px 10px">
+      <div class="empty">
         <div class="big">${I.cart}</div>
         <div><b>Ta liste est vide</b></div>
-        <div class="small">Tape sur vos produits ci-dessous, ou cherche dans la barre.</div>
-      </div>` + favGridHtml();
-    bindSuggestions(body); bindRefillCards(body);
-    bindFavGrid(body);
+        <div class="small">Ouvre l'onglet <b>Produits</b> et tape sur vos tuiles — ou cherche ci-dessus.</div>
+        <div class="chips"><button class="chip" id="goProduits">Voir vos produits</button></div>
+      </div>`;
+    bindSuggestions(body);
+    const g=body.querySelector("#goProduits"); if(g) g.onclick=()=>switchView("produits");
     return;
   }
   let html="";
@@ -1883,10 +1872,12 @@ function renderList(){
     if(it.checked) doneCost += best.cost; else restCost += best.cost;
   }
   const nDone = items.filter(i=>i.checked).length;
-  html += `<div class="listTotals">
-    <div class="lt done"><div class="ltLabel">Dans le caddie</div><div class="ltVal">${fmt(doneCost)}</div><div class="ltSub">${nDone} article(s) coché(s)</div></div>
-    <div class="lt"><div class="ltLabel">Restant</div><div class="ltVal">${fmt(restCost)}</div><div class="ltSub">${items.length-nDone} à prendre</div></div>
-    <div class="lt"><div class="ltLabel">Total estimé</div><div class="ltVal">${fmt(doneCost+restCost)}</div><div class="ltSub">${unpriced?unpriced+" non chiffré(s)":"au meilleur prix"}</div></div>
+  html += `<div class="costBar">
+    <span class="cbDone">${fmt(doneCost)} <span class="cbLbl">caddie</span></span>
+    <span class="cbSep">·</span>
+    <span>${fmt(restCost)} <span class="cbLbl">restant</span></span>
+    <span class="cbSep">·</span>
+    <span><b>${fmt(doneCost+restCost)}</b> <span class="cbLbl">total${unpriced?" (+"+unpriced+" ?)":""}</span></span>
   </div>`;
 
   const groups = {};
@@ -1910,22 +1901,31 @@ function renderList(){
       html+=`
       <div class="item ${it.checked?"checked":""}" data-uid="${it.uid}">
         <button class="ck" data-act="check">${it.checked?"✓":""}</button>
-        <div class="imain">
+        <div class="imain" data-act="check">
           <div class="iname">${esc(it.name)}</div>
           <div class="isub">${sub}</div>
         </div>
         <div class="qty">
-          <button data-act="minus">−</button><span>${it.qty}</span><button data-act="plus">+</button>
+          <button data-act="minus" aria-label="${it.qty<=1?"Retirer":"Moins"}">−</button><span>${it.qty}</span><button data-act="plus">+</button>
         </div>
-        <button class="del" data-act="del">✕</button>
       </div>`;
       if(it.cat) html+=stepBox(it);
     }
   }
-  html += favGridHtml();
+  const nChecked=items.filter(i=>i.checked).length;
+  if(nChecked>0){
+    html+=`<div class="bactions" style="margin-top:16px">
+      <button class="primaryBtn" id="finishShop">Terminer les courses (${nChecked} coché${nChecked>1?"s":""})</button>
+    </div>`;
+  }
   body.innerHTML=sug+html;
-  bindSuggestions(body); bindRefillCards(body);
-  bindFavGrid(body);
+  bindSuggestions(body);
+  const fin=body.querySelector("#finishShop");
+  if(fin) fin.onclick=()=>{
+    state.items=state.items.filter(i=>!i.checked);
+    saveState(); render();
+    toast(`Courses terminées — ${nChecked} article${nChecked>1?"s":""} retiré${nChecked>1?"s":""}`);
+  };
   body.querySelectorAll(".item").forEach(el=>{
     const uid=el.dataset.uid;
     el.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>itemAction(uid,b.dataset.act));
@@ -1981,9 +1981,11 @@ function itemAction(uid, act){
   const it = state.items.find(i=>String(i.uid)===String(uid));
   if(!it) return;
   if(act==="plus") it.qty++;
-  if(act==="minus") it.qty=Math.max(1,it.qty-1);
+  if(act==="minus"){
+    if(it.qty<=1){ state.items=state.items.filter(i=>i!==it); toast("Retiré : "+it.name); }
+    else it.qty--;
+  }
   if(act==="check") it.checked=!it.checked;
-  if(act==="del") state.items=state.items.filter(i=>i!==it);
   saveState(); render();
 }
 
@@ -2241,6 +2243,7 @@ document.querySelectorAll("nav .ico[data-i]").forEach(s=>{ s.innerHTML = I[s.dat
 document.querySelectorAll("#prixBar button").forEach(b=>b.onclick=()=>switchView(b.dataset.sub));
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>switchView(b.dataset.view));
 $("#catSearch").addEventListener("input", e=>{ catQuery=e.target.value; renderCatalogue(); });
+$("#prodSearch").addEventListener("input", e=>{ prodQuery=e.target.value; renderProduits(); });
 $("#syncBadge").onclick=syncSetup;
 document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) syncNow(); });
 
@@ -2293,18 +2296,15 @@ function parseCSV(text){
   }
   return {catalog, lastDate, nReleve};
 }
-/* real : true = tout relevé, false = tout simulé, nombre = part relevée sur total */
+/* La provenance des données est une info d'analyste : elle s'affiche dans
+   l'onglet Prix, plus dans l'en-tête. real : true = tout relevé, false =
+   tout simulé, nombre = part relevée sur total. */
 function setBadges(srcTxt, real, total){
-  $("#srcBadge").textContent = srcTxt;
-  const d=$("#demoBadge");
-  if(total===0){ d.textContent="Aucun produit"; d.classList.remove("real"); return; }
-  if(typeof real === "number" && total && real>0 && real<total){
-    d.textContent = `${real}/${total} relevés`;      // catalogue mixte : ne pas mentir
-    d.classList.add("real");
-  }else{
-    d.textContent = real ? "Prix relevés" : "Prix simulés";
-    d.classList.toggle("real", !!real);
-  }
+  let etat;
+  if(total===0) etat="aucun produit";
+  else if(typeof real==="number" && total && real>0 && real<total) etat=`${real}/${total} relevés en magasin`;
+  else etat = real ? "tous relevés en magasin" : "prix simulés";
+  $("#dataInfo").textContent = `${total??"?"} produits · ${etat} · ${srcTxt}`;
 }
 async function loadData(){
   // 1) CSV statique

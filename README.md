@@ -2,14 +2,15 @@
 
 App web mobile-first (français) pour gérer sa liste de courses, comparer les prix et promos entre enseignes belges, et préparer ses paniers par magasin. Zéro build, zéro dépendance : un `index.html` + une fonction Netlify.
 
-## Deux onglets, pas plus
+## Trois écrans, un rôle chacun
 
-L'app du quotidien tient sur un écran ; l'outillage d'analyse est replié derrière.
+**Produits ajoute, Liste coche, Prix analyse.** Aucun écran ne fait le travail d'un autre.
 
 | Onglet | Rôle |
 |---|---|
-| **Courses** | L'écran unique du foyer : la liste (grosses coches, bandeau de coût « dans le caddie / restant / total »), et en dessous la grille **Vos produits** façon Bring — une tuile par favori, tap = sur la liste, re-tap = retirée. Les tickets lus par Claude et ses suggestions apparaissent ici. « Gérer » ouvre la page Favoris (scan, édition, export). |
-| **Prix** | Les quatre outils d'analyse en sous-onglets : Promos (bonnes affaires vs trompe-l'œil), Comparer (3 enseignes, prix au kg), Paniers (répartition optimale), Catalogue (tous les produits relevés). |
+| **Liste** | Ce qu'on fait au magasin : on coche. Tap sur la ligne = coché, barre de coût sur une ligne (caddie · restant · total), « Terminer les courses » vide les cochés. Les suggestions de Claude apparaissent ici. |
+| **Produits** | D'où viennent les articles : la base des produits que le foyer aime, en tuiles façon Bring groupées par catégorie. Tap = sur la liste, re-tap = retirée. On l'enrichit par scan, ticket photographié (« Ajouter aux produits ») ou à la main ; « Modifier » renomme/supprime ; la recherche filtre les tuiles et propose aussi le catalogue de prix. |
+| **Prix** | Les quatre outils d'analyse en sous-onglets : Promos (bonnes affaires vs trompe-l'œil), Comparer (3 enseignes, prix au kg), Paniers (répartition optimale), Catalogue (tous les produits relevés). La provenance des données (n produits, dernier relevé) s'affiche ici, pas dans l'en-tête. |
 
 ### Comment une promo est jugée
 
@@ -99,15 +100,15 @@ Le cœur est une **fusion à trois états** (serveur / local / dernier état syn
 
 Synchro déclenchée : au chargement, au retour sur l'onglet, et 3 s après chaque modification. Hors-ligne, l'app fonctionne normalement en local et rattrape au retour du réseau.
 
-## Favoris : la base des produits du foyer
+## Produits : la base du foyer
 
 L'onglet a d'abord été un inventaire avec quantités et seuils (« il reste 1,5 kg de pâtes, seuil 2 kg »). **Abandonné volontairement** : décompter ce qu'on mange est une corvée que personne ne tient. Les structures de données (`stock.custom`, `stock.ean`, `qty`, `seuil`) sont conservées pour la compatibilité de la synchro, mais `qty`/`seuil` ne sont plus ni saisis ni affichés.
 
-L'onglet **Favoris** est désormais la base des produits que le foyer aime et rachète :
+L'écran **Produits** est la base de ce que le foyer aime et rachète :
 
-- **On l'enrichit** en scannant les paquets (le code-barres est mémorisé, Open Food Facts fournit marque et format), en photographiant un ticket pour Claude (`data/refill.csv` → « Ajouter aux favoris »), ou à la main.
+- **On l'enrichit** en scannant les paquets (le code-barres est mémorisé, Open Food Facts fournit marque et format), en photographiant un ticket pour Claude (`data/refill.csv` → « Ajouter aux produits »), ou à la main.
 - **On s'en sert** pour remplir la liste de courses en un tap. Chaque favori est rapproché du catalogue de prix (par nom, sinon par famille) : si le produit y figure, l'article ajouté est chiffré et comparé ; sinon c'est un article libre.
-- `data/stock.csv` reste le canal par lequel Claude peut semer des favoris versionnés ; le bouton « Exporter les favoris » (noms, catégories, codes-barres) est le chemin inverse.
+- `data/stock.csv` reste le canal par lequel Claude peut semer des produits versionnés ; le bouton « Exporter les produits » (noms, catégories, codes-barres) est le chemin inverse.
 
 ### Comment Claude ajoute des articles à la liste
 
