@@ -224,6 +224,9 @@
     width:100%; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11px;
     border:1px solid var(--line); border-radius:10px; padding:8px; background:var(--bg); color:var(--ink);
   }
+  /* ---- Réassort ticket ---- */
+  .refillCard{background:#f0fbf4; border-color:#bfe6cc}
+
   /* ---- Suggestions ---- */
   .sugCard{background:#f2f7ff; border-color:#c9dcf7}
   .sugRow{display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px dashed #c9dcf7}
@@ -443,8 +446,9 @@ function loadState(){
    à recoller dans data/stock.csv quand on veut le figer dans le repo. */
 let STOCK = [];                       // postes venant de data/stock.csv
 let SUGGEST = [];                     // propositions venant de data/suggestions.csv
+let REFILL = [];                      // réassorts venant de data/refill.csv (tickets lus par Claude)
 const SK_KEY = "mes-courses-stock-v1";
-let stock = { qty:{}, seuil:{}, custom:[], ean:{}, dismissed:[] };
+let stock = { qty:{}, seuil:{}, custom:[], ean:{}, dismissed:[], refillsDone:[] };
 function saveStock(){ try{ localStorage.setItem(SK_KEY, JSON.stringify(stock)); }catch(e){} }
 function loadStock(){
   try{
@@ -453,7 +457,7 @@ function loadStock(){
       const s = JSON.parse(raw);
       if(s && typeof s === "object")
         stock = {qty:s.qty||{}, seuil:s.seuil||{}, custom:s.custom||[],
-                 ean:s.ean||{}, dismissed:s.dismissed||[]};
+                 ean:s.ean||{}, dismissed:s.dismissed||[], refillsDone:s.refillsDone||[]};
     }
   }catch(e){}
 }
@@ -481,6 +485,49 @@ function setStockQty(id, q){
 }
 function slugify(s){
   return norm(s).replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,40);
+}
+
+/* ---- Réassort depuis un ticket de caisse ----------------------------
+   Enzo photographie son ticket, Claude le lit et écrit une ligne par
+   article dans data/refill.csv (batch;poste;nom;delta;unite). L'app
+   regroupe par batch (= un ticket) et propose d'appliquer en UN tap :
+   chaque delta s'ajoute à la quantité du poste. Un batch appliqué ou
+   ignoré est mémorisé localement (refillsDone) pour ne jamais compter
+   deux fois le même ticket — c'est le pendant "stock" des suggestions. */
+function pendingRefills(){
+  const byBatch=new Map();
+  for(const r of REFILL){
+    if(stock.refillsDone.includes(r.batch)) continue;
+    if(!byBatch.has(r.batch)) byBatch.set(r.batch,[]);
+    byBatch.get(r.batch).push(r);
+  }
+  return byBatch;
+}
+function applyRefill(batch){
+  const rows=REFILL.filter(r=>r.batch===batch);
+  let applied=0;
+  for(const r of rows){
+    let p=stockItem(r.poste);
+    if(!p && r.nom){
+      /* le ticket contient un produit sans poste : on le crée, seuil 0
+         (présent dans l'inventaire, mais pas d'alerte tant qu'Enzo n'a
+         pas décidé d'un seuil) */
+      const id=r.poste||slugify(r.nom);
+      stock.custom.push({id, nom:r.nom, categorie:"📦 Divers",
+                         unite:r.unite||"pièce", seuil:0, famille:"", note:"créé depuis un ticket"});
+      p=stockItem(id);
+    }
+    if(!p) continue;
+    stock.qty[p.id]=Math.max(0, Math.round(((stock.qty[p.id]??p.qty??0)+r.delta)*100)/100);
+    applied++;
+  }
+  stock.refillsDone.push(batch);
+  saveStock(); render();
+  toast(`Réassort appliqué : ${applied} poste(s) mis à jour`);
+}
+function dismissRefill(batch){
+  stock.refillsDone.push(batch);
+  saveStock(); render();
 }
 
 const $ = s => document.querySelector(s);
@@ -857,6 +904,21 @@ function renderStock(){
 
   if(stockEdit) html+=posteForm();
 
+  /* Tickets lus par Claude, en attente d'application */
+  for(const [batch,rows] of pendingRefills()){
+    html+=`<div class="card refillCard">
+      <b>🧾 ${esc(batch)}</b>
+      <div class="small" style="margin:6px 0 8px">${rows.map(r=>{
+        const p=stockItem(r.poste);
+        return `+${r.delta} ${esc(r.unite||(p?p.unite:""))} ${esc(p?p.nom:r.nom)}${p?"":" <span class='muted'>(nouveau poste)</span>"}`;
+      }).join(" · ")}</div>
+      <div class="bactions">
+        <button class="primaryBtn" data-refill="${esc(batch)}">✓ Appliquer au stock</button>
+        <button data-norefill="${esc(batch)}">Ignorer</button>
+      </div>
+    </div>`;
+  }
+
   if(items.length===0 && !stockEdit){
     html+=`<div class="empty"><div class="big">🧊</div><b>Aucun poste de stock</b>
       <div class="small">Un « poste » = quelque chose que vous devez toujours avoir en réserve : 2 kg de pâtes, 6 rouleaux de papier toilette, 1 L d'huile d'olive.<br><br>
@@ -966,6 +1028,8 @@ function bindStock(body){
   });
   on("#addMissing", addMissingToList);
   on("#exportStock", showStockExport);
+  body.querySelectorAll("[data-refill]").forEach(b=>b.onclick=()=>applyRefill(b.dataset.refill));
+  body.querySelectorAll("[data-norefill]").forEach(b=>b.onclick=()=>dismissRefill(b.dataset.norefill));
 }
 /* Un pas de 1 pour des pièces, de 0,5 pour du poids/volume */
 function stepFor(p){ return /kg|l\b|litre/i.test(p.unite||"") ? 0.5 : 1; }
@@ -1913,12 +1977,22 @@ async function loadSuggestions(){
       .map(o=>({id:o.id||slugify(o.nom), nom:o.nom, raison:o.raison||"", date:o.date||""}));
   }catch(e){}
 }
+async function loadRefill(){
+  try{
+    const r=await fetch("data/refill.csv");
+    if(!r.ok) return;
+    REFILL=parseRows(await r.text())
+      .filter(o=>o.batch && (o.poste||o.nom))
+      .map(o=>({batch:o.batch, poste:o.poste||slugify(o.nom), nom:o.nom||"",
+                delta:parseFloat((o.delta||"1").replace(",","."))||1, unite:o.unite||""}));
+  }catch(e){}
+}
 
 loadState();
 loadStock();
 render();
 loadData();
-Promise.all([loadStockCsv(), loadSuggestions()]).then(render);
+Promise.all([loadStockCsv(), loadSuggestions(), loadRefill()]).then(render);
 </script>
 </body>
 </html>
