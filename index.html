@@ -471,6 +471,19 @@
   .tile.edit{border-color:var(--accent-ring)}
   .tile.edit .tIni{background:#fff7e0; color:#9a6b00}
   .stkTools button.editOn{background:var(--accent-soft); border-color:var(--accent-ring); color:var(--accent-deep)}
+  .altHint{
+    display:flex; align-items:center; gap:8px; justify-content:space-between;
+    margin:-6px 2px 10px 14px; padding:7px 10px;
+    background:var(--accent-soft); border:1px dashed var(--accent-ring);
+    border-radius:var(--radius-s); font-size:12px; line-height:1.35;
+  }
+  .altHint .altTxt{flex:1}
+  .altHint .altSave{color:var(--accent-deep); font-weight:800}
+  .altHint .altBtn{
+    flex:none; border:1.5px solid var(--accent-ring); background:var(--card);
+    color:var(--accent-deep); font-weight:700; font-size:11.5px;
+    padding:5px 9px; border-radius:999px; cursor:pointer;
+  }
 </style>
 </head>
 <body>
@@ -1910,6 +1923,21 @@ function renderList(){
         </div>
       </div>`;
       if(it.cat) html+=stepBox(it);
+      /* substitut : meilleur produit équivalent (même famille) à quantité
+         égale — c'est ici qu'« Œufs Boni » se compare aux autres œufs */
+      if(!it.checked){
+        const alt=alternativesFor(it)[0];
+        if(alt){
+          const detail = alt.up
+            ? `${fmt(alt.up.v)}/${UNIT_LABEL[alt.up.u]} chez ${esc(alt.best.store.name)} (tu es à ${fmt(alt.curUP.v)}/${UNIT_LABEL[alt.curUP.u]})`
+            : `${fmt(alt.best.cost)} chez ${esc(alt.best.store.name)}`;
+          const pe=alt.c.prices[alt.best.store.id], pr=pe&&pe.promo;
+          html+=`<div class="altHint">
+            <span class="altTxt"><span class="altSave">−${Math.round(alt.gain*100)}%</span> <b>${esc(alt.c.name)}</b> · ${detail}${pr?` <span class="promoTag">${promoLabel(pr)}</span>`:""}</span>
+            <button class="altBtn" data-swap="${it.uid}" data-to="${esc(alt.c.id)}">Remplacer</button>
+          </div>`;
+        }
+      }
     }
   }
   const nChecked=items.filter(i=>i.checked).length;
@@ -1930,6 +1958,7 @@ function renderList(){
     const uid=el.dataset.uid;
     el.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>itemAction(uid,b.dataset.act));
   });
+  body.querySelectorAll("[data-swap]").forEach(b=>b.onclick=()=>swapItem(b.dataset.swap, b.dataset.to));
   body.querySelectorAll("[data-step]").forEach(b=>b.onclick=()=>setQty(b.dataset.step, +b.dataset.to));
 }
 
