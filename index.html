@@ -893,18 +893,28 @@ function renderStock(){
   body.innerHTML=html;
   bindStock(body);
 }
+/* Un poste créé dans l'app (stock.custom) est entièrement éditable — y compris
+   son nom : indispensable pour renommer les « Code 5400… » que le scan crée
+   quand Open Food Facts ne connaît pas le produit. Un poste venant de
+   data/stock.csv garde son identité (elle se change dans le repo) ; seul son
+   seuil est modifiable localement. */
+function isCustomPoste(id){ return stock.custom.some(p=>p.id===id); }
 function posteForm(){
-  const p = stockEdit==="new" ? {id:"",nom:"",categorie:"",unite:"pièce",seuil:1,note:""} : stockItem(stockEdit)||{};
+  const isNew = stockEdit==="new";
+  const p = isNew ? {id:"",nom:"",categorie:"",unite:"pièce",seuil:1,note:""} : stockItem(stockEdit)||{};
+  const editable = isNew || isCustomPoste(stockEdit);
   return `<div class="card posteForm">
-    <b>${stockEdit==="new"?"Nouveau poste de stock":"Modifier « "+esc(p.nom)+" »"}</b>
-    ${stockEdit==="new"?`
+    <b>${isNew?"Nouveau poste de stock":"Modifier « "+esc(p.nom)+" »"}</b>
+    ${editable?`
       <label>Nom <input id="pfNom" type="text" placeholder="ex : Pâtes sèches" value="${esc(p.nom)}"></label>
       <label>Catégorie <input id="pfCat" type="text" placeholder="ex : 🥫 Épicerie" value="${esc(p.categorie)}"></label>
-      <label>Unité <input id="pfUnite" type="text" placeholder="kg, L, pièce, paquet" value="${esc(p.unite)}"></label>`:""}
+      <label>Unité <input id="pfUnite" type="text" placeholder="kg, L, pièce, paquet" value="${esc(p.unite)}"></label>`
+    :`<div class="small muted" style="margin-top:6px">Ce poste vient de <code>data/stock.csv</code> — son nom se change dans le repo (demande à Claude). Ici, seul le seuil est modifiable.</div>`}
     <label>Seuil — quantité à toujours avoir
       <input id="pfSeuil" type="number" inputmode="decimal" min="0" step="0.5" value="${p.seuil}"></label>
     <div class="bactions">
       <button id="pfSave" class="primaryBtn">Enregistrer</button>
+      ${!isNew && editable?`<button id="pfDelete" style="color:var(--danger)">Supprimer</button>`:""}
       <button id="pfCancel">Annuler</button>
     </div>
   </div>`;
@@ -925,10 +935,27 @@ function bindStock(body){
         categorie:((body.querySelector("#pfCat")||{}).value||"📦 Divers").trim(),
         unite:((body.querySelector("#pfUnite")||{}).value||"pièce").trim(),
         seuil, famille:"", note:""});
+    }else if(isCustomPoste(stockEdit)){
+      /* poste créé dans l'app : tout est éditable, l'id ne bouge pas
+         (les codes-barres mémorisés pointent dessus) */
+      const c=stock.custom.find(p=>p.id===stockEdit);
+      const nom=((body.querySelector("#pfNom")||{}).value||"").trim();
+      if(!nom){ toast("Il faut un nom"); return; }
+      c.nom=nom;
+      c.categorie=((body.querySelector("#pfCat")||{}).value||"📦 Divers").trim();
+      c.unite=((body.querySelector("#pfUnite")||{}).value||"pièce").trim();
+      c.seuil=seuil; delete stock.seuil[stockEdit];
     }else{
       stock.seuil[stockEdit]=seuil;      // override local du seuil du CSV
     }
     stockEdit=null; saveStock(); render(); toast("Poste enregistré");
+  });
+  on("#pfDelete", ()=>{
+    const id=stockEdit;
+    stock.custom=stock.custom.filter(p=>p.id!==id);
+    delete stock.qty[id]; delete stock.seuil[id];
+    for(const [ean,pid] of Object.entries(stock.ean)) if(pid===id) delete stock.ean[ean];
+    stockEdit=null; saveStock(); render(); toast("Poste supprimé");
   });
   body.querySelectorAll("[data-seuil]").forEach(b=>b.onclick=()=>{ stockEdit=b.dataset.seuil; renderStock(); });
   body.querySelectorAll("[data-inc]").forEach(b=>b.onclick=()=>{
