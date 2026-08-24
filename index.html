@@ -479,6 +479,29 @@
   }
   .altHint .altTxt{flex:1}
   .altHint .altSave{color:var(--accent-deep); font-weight:800}
+  .optBox{
+    margin:-6px 2px 10px 14px; padding:4px 10px;
+    background:var(--card); border:1px solid var(--line);
+    border-radius:var(--radius-s); box-shadow:var(--shadow);
+  }
+  .optRow{
+    display:flex; align-items:center; gap:8px; padding:7px 0;
+    font-size:12px; line-height:1.3;
+    border-bottom:1px solid var(--line);
+  }
+  .optRow:last-child{border-bottom:none}
+  .optRow .optStore{flex:none; width:74px; font-weight:800; color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.02em}
+  .optRow.best .optStore{color:var(--accent-deep)}
+  .optRow .optName{flex:1}
+  .optRow .optPrice{flex:none; font-weight:800; font-variant-numeric:tabular-nums}
+  .optRow.best .optPrice{color:var(--accent-deep)}
+  .optRow .optPick{
+    flex:none; border:1.5px solid var(--line); background:var(--bg);
+    color:var(--accent-deep); font-weight:700; font-size:11px;
+    padding:4px 8px; border-radius:999px; cursor:pointer;
+  }
+  .optRow.best .optPick{border-color:var(--accent-ring); background:var(--accent-soft)}
+  .optRow.off{opacity:.6}
   .altHint .altBtn{
     flex:none; border:1.5px solid var(--accent-ring); background:var(--card);
     color:var(--accent-deep); font-weight:700; font-size:11.5px;
@@ -1098,11 +1121,60 @@ function setQty(uid, q){
 }
 
 /* Articles de la liste enrichis (comparables vs libres) */
+/* Un BESOIN générique ("Œufs", "spaghetti") matche plusieurs produits du
+   catalogue : chaque token de la requête doit apparaître comme mot du nom
+   (tolérance singulier/pluriel par préfixe >=4 lettres) ou égaler la famille. */
+function needMatch(query){
+  const qt = norm(query).split(/[^a-z0-9%]+/).filter(Boolean);
+  if(!qt.length) return [];
+  const tokEq=(a,b)=> a===b || (a.length>=4 && b.length>=4 && (a.startsWith(b)||b.startsWith(a)));
+  return DATA.catalog.filter(c=>{
+    const fam = norm(c.famille||"");
+    const nt = norm(c.name).split(/[^a-z0-9%]+/).filter(Boolean);
+    return qt.every(q => tokEq(fam,q) || nt.some(t=>tokEq(t,q)));
+  });
+}
+/* Pour un article-besoin : l'option la moins chère par enseigne, et la
+   moins chère tous magasins confondus (celle qui chiffre la liste). */
+function resolveNeed(it){
+  const opts = needMatch(it.name).map(c=>{
+    const perStore={};
+    for(const st of DATA.stores){
+      const e=c.prices[st.id];
+      if(e && !e.na && e.p!=null){
+        const cc=cost(e, it.qty);
+        if(cc!==null) perStore[st.id]={cost:cc, up:unitPrice(c, cc, it.qty)};
+      }
+    }
+    return {c, perStore};
+  }).filter(o=>Object.keys(o.perStore).length);
+  if(!opts.length) return null;
+  /* Si tous les formats se ramènent à la même unité (€/kg, €/L…), on
+     départage au prix unitaire — sinon un 50 cl "battrait" un litre. */
+  const units=new Set();
+  for(const o of opts) for(const v of Object.values(o.perStore)) units.add(v.up?v.up.u:"?");
+  const byUnit = units.size===1 && !units.has("?");
+  const keyOf = v => byUnit ? v.up.v : v.cost;
+  const byStore={};
+  for(const st of DATA.stores){
+    let best=null;
+    for(const o of opts){
+      const v=o.perStore[st.id];
+      if(v && (!best || keyOf(v)<keyOf(best))) best={c:o.c, cost:v.cost, up:v.up};
+    }
+    if(best) byStore[st.id]=best;
+  }
+  let overall=null;
+  for(const [sid,b] of Object.entries(byStore))
+    if(!overall || keyOf(b)<keyOf(overall)) overall={...b, storeId:sid};
+  return {options:opts, byStore, overall, byUnit};
+}
 function relinkFreeItems(){
   if(!DATA.catalog.length) return;
   let changed=false;
   for(const it of state.items){
-    if(it.catalogId) continue;
+    if(it.catalogId || it.need) continue;
+    if(needMatch(it.name).length>=2){ it.need=true; changed=true; continue; }
     const hit = nameCatalogMatch(it.name);
     if(hit){ it.catalogId = hit.id; changed = true; }
   }
@@ -1110,6 +1182,11 @@ function relinkFreeItems(){
 }
 function enrichedItems(){
   return state.items.map(it=>{
+    if(!it.catalogId && it.need){
+      const r=resolveNeed(it);
+      if(r) return {...it, cat:r.overall.c, needInfo:r, orphan:false};
+      return {...it, cat:null, needInfo:null, orphan:false};
+    }
     const cat = it.catalogId ? catItem(it.catalogId) : null;
     /* orphan : l'article pointait vers une fiche qui n'existe plus (purge du
        catalogue, id renommé). On le garde dans la liste — il reste utile en
@@ -1917,7 +1994,11 @@ function renderList(){
     for(const it of arr){
       const best = it.cat ? bestStoreFor(it.cat, it.qty) : null;
       let sub;
-      if(it.orphan)    sub = "retiré du catalogue — plus de prix associé";
+      if(it.needInfo){
+        const o=it.needInfo.overall;
+        sub = `${it.needInfo.options.length} options · dès ${fmt(o.cost/it.qty)} — ${esc(o.c.name)}`;
+      }
+      else if(it.orphan)    sub = "retiré du catalogue — plus de prix associé";
       else if(!it.cat) sub = "article libre — non comparé";
       else if(!best)   sub = esc(it.cat.unit)+" · aucun prix connu";
       else{
@@ -1937,9 +2018,26 @@ function renderList(){
         </div>
       </div>`;
       if(it.cat) html+=stepBox(it);
+      /* article-besoin : le comparatif des 3 enseignes, la moins chère en tête */
+      if(it.needInfo && !it.checked){
+        const rows = DATA.stores.map(st=>{
+          const b=it.needInfo.byStore[st.id];
+          if(!b) return `<div class="optRow off"><span class="optStore">${esc(st.name)}</span><span class="optName muted">aucune option relevée</span></div>`;
+          const isBest = it.needInfo.overall.storeId===st.id;
+          const e=b.c.prices[st.id], pr=e&&e.promo;
+          const upTxt = it.needInfo.byUnit && b.up ? ` <span class="muted">· ${fmt(b.up.v)}/${UNIT_LABEL[b.up.u]}</span>` : "";
+          return `<div class="optRow ${isBest?"best":""}">
+            <span class="optStore">${esc(st.name)}</span>
+            <span class="optName">${esc(b.c.name)} <span class="muted">${esc(b.c.unit||"")}</span>${upTxt}${pr?` <span class="promoTag">${promoLabel(pr)}</span>`:""}</span>
+            <span class="optPrice">${fmt(b.cost/it.qty)}</span>
+            <button class="optPick" data-pick="${it.uid}" data-to="${esc(b.c.id)}">Choisir</button>
+          </div>`;
+        }).join("");
+        html+=`<div class="optBox">${rows}</div>`;
+      }
       /* substitut : meilleur produit équivalent (même famille) à quantité
          égale — c'est ici qu'« Œufs Boni » se compare aux autres œufs */
-      if(!it.checked){
+      if(!it.checked && !it.needInfo){
         const alt=alternativesFor(it)[0];
         if(alt){
           const detail = alt.up
@@ -1971,6 +2069,14 @@ function renderList(){
   body.querySelectorAll(".item").forEach(el=>{
     const uid=el.dataset.uid;
     el.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>itemAction(uid,b.dataset.act));
+  });
+  body.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>{
+    const it=state.items.find(i=>String(i.uid)===String(b.dataset.pick));
+    const c=catItem(b.dataset.to);
+    if(!it || !c) return;
+    it.catalogId=c.id; it.need=false; it.name=c.name;
+    saveState(); render();
+    toast("Choisi : "+c.name);
   });
   body.querySelectorAll("[data-swap]").forEach(b=>b.onclick=()=>swapItem(b.dataset.swap, b.dataset.to));
   body.querySelectorAll("[data-step]").forEach(b=>b.onclick=()=>setQty(b.dataset.step, +b.dataset.to));
@@ -2040,7 +2146,13 @@ function addItemSilent(catalogId, freeName){
     const c=catItem(catalogId); if(!c) return;
     state.items.push({uid:Date.now()+Math.random(), catalogId, name:c.name, qty:1, checked:false});
   }else if(freeName && freeName.trim()){
-    state.items.push({uid:Date.now()+Math.random(), catalogId:null, name:freeName.trim(), qty:1, checked:false});
+    const nm=freeName.trim(), matches=needMatch(nm);
+    if(matches.length>=2)
+      state.items.push({uid:Date.now()+Math.random(), catalogId:null, need:true, name:nm, qty:1, checked:false});
+    else if(matches.length===1)
+      addItemSilent(matches[0].id, null);
+    else
+      state.items.push({uid:Date.now()+Math.random(), catalogId:null, name:nm, qty:1, checked:false});
   }
 }
 function addItem(catalogId, freeName){
@@ -2053,8 +2165,16 @@ function addItem(catalogId, freeName){
       toast("Ajouté : "+c.name);
     }
   }else if(freeName && freeName.trim()){
-    state.items.push({uid:Date.now()+Math.random(), catalogId:null, name:freeName.trim(), qty:1, checked:false});
-    toast("Ajouté : "+freeName.trim());
+    const nm=freeName.trim(), matches=needMatch(nm);
+    if(matches.length>=2){
+      state.items.push({uid:Date.now()+Math.random(), catalogId:null, need:true, name:nm, qty:1, checked:false});
+      toast(`Ajouté : ${nm} — ${matches.length} options comparées`);
+    }else if(matches.length===1){
+      addItem(matches[0].id, null); return;
+    }else{
+      state.items.push({uid:Date.now()+Math.random(), catalogId:null, name:nm, qty:1, checked:false});
+      toast("Ajouté : "+nm);
+    }
   }
   saveState(); render();
 }
@@ -2110,9 +2230,13 @@ $("#addBtn").onclick=commitAdd;
 function commitAdd(){
   const q=norm(input.value);
   if(!q) return;
-  const exact = DATA.catalog.find(c=>norm(c.name)===q) || DATA.catalog.filter(c=>norm(c.name).includes(q))[0];
-  if(exact && norm(exact.name).includes(q)) addItem(exact.id,null);
-  else addItem(null, input.value);
+  const exact = DATA.catalog.find(c=>norm(c.name)===q);
+  if(exact) addItem(exact.id,null);
+  else if(needMatch(input.value).length>=1) addItem(null, input.value); // besoin générique (>=2 options) ou lien unique
+  else{
+    const sub = DATA.catalog.filter(c=>norm(c.name).includes(q))[0];
+    if(sub) addItem(sub.id,null); else addItem(null, input.value);
+  }
   input.value=""; sug.hidden=true;
 }
 
