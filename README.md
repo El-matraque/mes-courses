@@ -7,6 +7,7 @@ App web mobile-first (français) pour gérer sa liste de courses, comparer les p
 | Onglet | Rôle |
 |---|---|
 | 🛒 **Liste** | La liste de courses : ajout par recherche (suggestions groupées par famille), quantités, cases à cocher, persistance locale |
+| 🧊 **Stock** | L'inventaire : ce qu'on doit toujours avoir en réserve, ce qu'il en reste, et ce qui est passé sous le seuil. Scan de code-barres pour le remplir |
 | 📚 **Catalogue** | Parcourir les produits par rayon puis par famille, triés du meilleur au moins bon rapport qualité-prix, ajout en un tap. Conçu pour rester utilisable à plusieurs centaines de références |
 | 🏷 **Promos** | Toutes les promos du catalogue, triées par gain réel, en séparant les vraies bonnes affaires des trompe-l'œil |
 | ⚖️ **Comparer** | Prix des 3 enseignes article par article, promos, prix au kg/L, alternatives moins chères, et totaux par enseigne |
@@ -89,6 +90,33 @@ Si deux formats du même produit coexistent, ils partagent le même `nom` et se 
 Autres colonnes : promo = `-20%`, `1+1` ou `2e-50` ; `date_releve` vide = prix simulé (le badge de l'app s'adapte automatiquement, et chaque fiche affiche l'âge du relevé) ; `unite` est normalisée automatiquement (`150 g`, `4 × 125 g`, `6 × 1,5 L`, `12 pièces`…) pour calculer un **prix au kg / L / pièce** — c'est lui qui sert à comparer, pas le prix du paquet ; `famille` regroupe les produits similaires — l'app propose alors des alternatives au moins 5 % moins chères **à quantité égale**, avec un bouton « Remplacer ».
 
 Le CSV peut être rempli par : (a) une session Claude in Chrome qui relève les prix réels sur les 3 sites (gratuit, semi-manuel), (b) Enzo à la main dans Excel, (c) plus tard, un job automatisé (GitHub Action + API Apify) qui régénère le fichier.
+
+## Inventaire : un modèle délibérément coupé en deux
+
+L'app est un site statique sans backend. Elle ne peut donc rien écrire dans le repo, et Claude ne peut rien lire dans le navigateur. L'inventaire est découpé selon cette frontière :
+
+| Moitié | Où | Change | Qui y a accès |
+|---|---|---|---|
+| **Les seuils** — ce qu'on doit toujours avoir | `data/stock.csv` | rarement | l'app **et** Claude |
+| **Les quantités du moment** + les codes-barres déjà rattachés | `localStorage` | tous les jours | l'app seule |
+
+Un « poste de stock » n'est pas un produit précis mais une **réserve** : *2 kg de pâtes*, *12 rouleaux de papier toilette*, *1 L d'huile d'olive*. La colonne `famille` peut le relier à une famille du catalogue prix — l'app ajoute alors automatiquement le produit **le moins cher au kilo** de cette famille plutôt qu'un article libre.
+
+Le bouton **Exporter l'inventaire** est le pont entre les deux moitiés : il recrache postes, seuils et quantités en CSV, à transmettre à Claude ou à coller dans `data/stock.csv`.
+
+### Comment Claude ajoute des articles à la liste
+
+La liste de courses vit dans le navigateur : Claude ne peut pas y écrire. Il écrit dans **`data/suggestions.csv`** (`id;nom;raison;date`), et l'app affiche ces lignes en haut de l'onglet Liste avec un bouton d'ajout et un bouton de refus. Si l'`id` correspond à une fiche du catalogue, l'article ajouté est comparable et chiffré ; sinon c'est un article libre.
+
+### Le scan de code-barres
+
+Sur iPhone, l'API navigateur `BarcodeDetector` est désactivée par défaut quelle que soit la version de Safari. L'app charge donc [html5-qrcode](https://github.com/mebjas/html5-qrcode) (EAN-13, caméra inline supportée sur iOS ≥ 15.1) **depuis jsDelivr et uniquement à l'ouverture du scanner**, pour ne pas alourdir le démarrage.
+
+Un code inconnu est identifié via l'[API Open Food Facts](https://openfoodfacts.github.io/openfoodfacts-server/api/) — lecture libre, sans clé, plafonnée à 15 requêtes/minute par IP. Le navigateur interdisant de fixer le `User-Agent` qu'OFF demande, l'identification passe par le paramètre `app_name`. Le rattachement code-barres → poste de stock est mémorisé : le même produit rescanné s'incrémente sans poser de question.
+
+⚠️ Open Food Facts donne l'**identité** du produit (marque, nom, format), jamais son prix. Les prix continuent de venir des relevés en magasin.
+
+**La saisie manuelle du code n'est pas un gadget** : entre les permissions caméra, la lumière des rayons et les emballages froissés, c'est le repli qui sauve la mise. Elle reste visible en permanence sous la caméra, et l'app bascule dessus avec un message explicite si le lecteur ou la caméra échouent.
 
 ## Connexion aux enseignes : ce qui est réaliste
 

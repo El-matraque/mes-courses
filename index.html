@@ -192,6 +192,72 @@
   }
   .addP.in{background:var(--accent); border-color:var(--accent); color:#fff; font-size:15px}
 
+  /* ---- Inventaire ---- */
+  .stkTools{display:flex; gap:8px; margin-bottom:12px}
+  .stkTools button{
+    flex:1; padding:11px 8px; border-radius:var(--radius); border:1px solid var(--line);
+    background:var(--card); color:var(--ink); font-size:13.5px; font-weight:700; cursor:pointer;
+  }
+  .primaryBtn{background:var(--accent) !important; border-color:var(--accent) !important; color:#fff !important}
+  .stk{
+    display:flex; align-items:center; gap:10px; background:var(--card);
+    border:1px solid var(--line); border-left:5px solid var(--line);
+    border-radius:var(--radius); padding:10px 12px; margin-bottom:8px;
+  }
+  .stk.ok{border-left-color:var(--accent)}
+  .stk.bas{border-left-color:var(--promo)}
+  .stk.vide{border-left-color:var(--danger)}
+  .stkMain{flex:1; min-width:0}
+  .stkName{font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .stkBar{height:5px; border-radius:99px; background:var(--line); margin:6px 0 5px; overflow:hidden}
+  .stkBar span{display:block; height:100%; border-radius:99px; background:var(--accent)}
+  .stk.bas .stkBar span{background:var(--promo)}
+  .stk.vide .stkBar span{background:var(--danger)}
+  .stkSub{font-size:12px; color:var(--muted)}
+  .linkBtn{background:none; border:none; color:var(--accent); font-size:12px; font-weight:700; cursor:pointer; padding:0 0 0 4px}
+  .posteForm label{display:block; font-size:12.5px; font-weight:600; color:var(--muted); margin:9px 0 0}
+  .posteForm input{
+    display:block; width:100%; margin-top:3px; font-size:16px; padding:9px 11px;
+    border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--ink);
+  }
+  .exportTa{
+    width:100%; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11px;
+    border:1px solid var(--line); border-radius:10px; padding:8px; background:var(--bg); color:var(--ink);
+  }
+  /* ---- Suggestions ---- */
+  .sugCard{background:#f2f7ff; border-color:#c9dcf7}
+  .sugRow{display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px dashed #c9dcf7}
+  .sugRow:last-of-type{border-bottom:none}
+  .sugTxt{flex:1; min-width:0; font-size:13.5px}
+  .sugAdd,.sugNo{
+    width:30px; height:30px; flex:0 0 30px; border-radius:9px; border:1px solid var(--line);
+    background:var(--card); font-size:16px; font-weight:700; cursor:pointer; line-height:1;
+  }
+  .sugAdd{color:var(--accent); border-color:var(--accent)}
+  .sugNo{color:var(--muted)}
+
+  /* ---- Scanner ---- */
+  .scanWrap{position:fixed; inset:0; z-index:60; background:#000; display:flex; flex-direction:column}
+  .scanHead{
+    display:flex; align-items:center; gap:10px; padding:calc(10px + env(safe-area-inset-top)) 14px 10px;
+    color:#fff; font-weight:700; font-size:15px; background:#111;
+  }
+  .scanHead button{margin-left:auto; background:none; border:none; color:#fff; font-size:22px; cursor:pointer}
+  #scanView{flex:1; min-height:0; overflow:hidden}
+  #scanView video{width:100%; height:100%; object-fit:cover}
+  .scanFoot{background:#111; color:#fff; padding:12px 14px calc(12px + env(safe-area-inset-bottom)); font-size:13px}
+  .scanFoot .manual{display:flex; gap:8px; margin-top:8px}
+  .scanFoot input{
+    flex:1; font-size:16px; padding:10px 12px; border-radius:10px; border:1px solid #333;
+    background:#1c1c1c; color:#fff;
+  }
+  .scanFoot .manual button{
+    padding:10px 14px; border-radius:10px; border:none; background:var(--accent);
+    color:#fff; font-weight:700; cursor:pointer;
+  }
+  .scanMsg{opacity:.85}
+  .scanMsg.err{color:#fca5a5}
+
   /* ---- Promos ---- */
   .promoCard{border-left:5px solid var(--line)}
   .promoCard.deal{border-left-color:var(--accent)}
@@ -229,11 +295,11 @@
     padding-bottom:env(safe-area-inset-bottom);
   }
   nav button{
-    flex:1; background:none; border:none; cursor:pointer; color:var(--muted);
+    flex:1; min-width:0; background:none; border:none; cursor:pointer; color:var(--muted);
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
-    font-size:11.5px; font-weight:600;
+    font-size:10px; font-weight:600; padding:0 2px;
   }
-  nav button .ico{font-size:21px}
+  nav button .ico{font-size:19px}
   nav button.on{color:var(--accent)}
   nav .cnt{
     position:absolute; transform:translate(14px,-26px);
@@ -282,6 +348,10 @@
     <div id="catBody"></div>
   </section>
 
+  <section id="view-stock" hidden>
+    <div id="stockBody"></div>
+  </section>
+
   <section id="view-promos" hidden>
     <div id="promoBody"></div>
   </section>
@@ -297,6 +367,7 @@
 
 <nav>
   <button data-view="liste" class="on"><span class="ico">🛒</span>Liste<span class="cnt" id="navCnt" hidden></span></button>
+  <button data-view="stock"><span class="ico">🧊</span>Stock<span class="cnt" id="navStock" hidden></span></button>
   <button data-view="catalogue"><span class="ico">📚</span>Catalogue</button>
   <button data-view="promos"><span class="ico">🏷</span>Promos<span class="cnt" id="navPromo" hidden></span></button>
   <button data-view="comparer"><span class="ico">⚖️</span>Comparer</button>
@@ -350,6 +421,61 @@ function loadState(){
     const raw = localStorage.getItem(LS_KEY);
     if(raw){ const s = JSON.parse(raw); if(s && Array.isArray(s.items)) state = s; }
   }catch(e){}
+}
+
+/* ==================== INVENTAIRE (modèle hybride) ====================
+   Deux moitiés, volontairement séparées :
+
+   • data/stock.csv — LES SEUILS, ce qu'on doit toujours avoir en réserve.
+     Versionné dans le repo, donc lisible et modifiable hors de l'app.
+     Ça change rarement.
+
+   • localStorage    — LES QUANTITÉS DU MOMENT, plus la mémoire des
+     codes-barres déjà rattachés à un poste. Ça change tous les jours et
+     doit rester instantané, y compris debout devant un placard.
+
+   Le bouton « Exporter » sert de pont : il recrache l'état complet en CSV,
+   à recoller dans data/stock.csv quand on veut le figer dans le repo. */
+let STOCK = [];                       // postes venant de data/stock.csv
+let SUGGEST = [];                     // propositions venant de data/suggestions.csv
+const SK_KEY = "mes-courses-stock-v1";
+let stock = { qty:{}, seuil:{}, custom:[], ean:{}, dismissed:[] };
+function saveStock(){ try{ localStorage.setItem(SK_KEY, JSON.stringify(stock)); }catch(e){} }
+function loadStock(){
+  try{
+    const raw = localStorage.getItem(SK_KEY);
+    if(raw){
+      const s = JSON.parse(raw);
+      if(s && typeof s === "object")
+        stock = {qty:s.qty||{}, seuil:s.seuil||{}, custom:s.custom||[],
+                 ean:s.ean||{}, dismissed:s.dismissed||[]};
+    }
+  }catch(e){}
+}
+/* Postes = ceux du CSV + ceux créés dans l'app, avec les seuils éventuellement
+   redéfinis localement (le local gagne : c'est le plus récent). */
+function stockItems(){
+  const all=[...STOCK, ...stock.custom];
+  return all.map(p=>({
+    ...p,
+    seuil: stock.seuil[p.id] !== undefined ? stock.seuil[p.id] : p.seuil,
+    qty:   stock.qty[p.id]   !== undefined ? stock.qty[p.id]   : 0,
+  }));
+}
+function stockItem(id){ return stockItems().find(p=>p.id===id) || null; }
+/* Manquants = sous le seuil. On renvoie aussi combien il en faut. */
+function missingStock(){
+  return stockItems()
+    .filter(p=>p.seuil>0 && p.qty < p.seuil)
+    .map(p=>({...p, manque: Math.round((p.seuil-p.qty)*100)/100}))
+    .sort((a,b)=>(a.qty/a.seuil)-(b.qty/b.seuil));   // les plus critiques d'abord
+}
+function setStockQty(id, q){
+  stock.qty[id]=Math.max(0, Math.round(q*100)/100);
+  saveStock(); render();
+}
+function slugify(s){
+  return norm(s).replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,40);
 }
 
 const $ = s => document.querySelector(s);
@@ -665,6 +791,7 @@ function switchView(v){
   view=v;
   for(const b of document.querySelectorAll("nav button")) b.classList.toggle("on", b.dataset.view===v);
   $("#view-liste").hidden = v!=="liste";
+  $("#view-stock").hidden = v!=="stock";
   $("#view-catalogue").hidden = v!=="catalogue";
   $("#view-promos").hidden = v!=="promos";
   $("#view-comparer").hidden = v!=="comparer";
@@ -680,11 +807,358 @@ function render(){
   const deals=promoDeals().filter(d=>d.verdict==="deal").length;
   const pb=$("#navPromo");
   pb.hidden = deals===0; pb.textContent=deals;
+  const nMiss=missingStock().length;
+  const sb=$("#navStock");
+  sb.hidden = nMiss===0; sb.textContent=nMiss;
   if(view==="liste") renderList();
+  if(view==="stock") renderStock();
   if(view==="catalogue") renderCatalogue();
   if(view==="promos") renderPromos();
   if(view==="comparer") renderCompare();
   if(view==="paniers") renderBaskets();
+}
+
+/* ---- Inventaire ---- */
+let stockEdit = null;    // id du poste en cours d'édition de seuil, ou "new"
+function stockRow(p){
+  const ratio = p.seuil>0 ? p.qty/p.seuil : 1;
+  const cls = p.qty<=0 ? "vide" : ratio<1 ? "bas" : "ok";
+  const pct = Math.max(0, Math.min(100, p.seuil>0 ? ratio*100 : 100));
+  const u = p.unite||"";
+  return `<div class="stk ${cls}">
+    <div class="stkMain">
+      <div class="stkName">${esc(p.nom)}${p.note?` <span class="muted small">${esc(p.note)}</span>`:""}</div>
+      <div class="stkBar"><span style="width:${pct}%"></span></div>
+      <div class="stkSub">
+        <b>${p.qty}</b> ${esc(u)} en stock · seuil ${p.seuil} ${esc(u)}
+        <button class="linkBtn" data-seuil="${esc(p.id)}">modifier</button>
+      </div>
+    </div>
+    <div class="qty">
+      <button data-dec="${esc(p.id)}">−</button>
+      <button data-inc="${esc(p.id)}">+</button>
+    </div>
+  </div>`;
+}
+function renderStock(){
+  const body=$("#stockBody");
+  const items=stockItems();
+  const missing=missingStock();
+
+  let html=`<div class="stkTools">
+    <button class="primaryBtn" id="scanBtn">📷 Scanner un produit</button>
+    <button id="newPoste">+ Nouveau poste</button>
+  </div>`;
+
+  if(stockEdit) html+=posteForm();
+
+  if(items.length===0 && !stockEdit){
+    html+=`<div class="empty"><div class="big">🧊</div><b>Aucun poste de stock</b>
+      <div class="small">Un « poste » = quelque chose que vous devez toujours avoir en réserve : 2 kg de pâtes, 6 rouleaux de papier toilette, 1 L d'huile d'olive.<br><br>
+      Crée-les ici, ou dicte-les à Claude : il les écrira dans <code>data/stock.csv</code>, où ils seront versionnés et lisibles hors de l'app.</div></div>`;
+    body.innerHTML=html;
+    bindStock(body);
+    return;
+  }
+
+  if(missing.length){
+    html+=`<div class="card warn">
+      <b>🔻 ${missing.length} poste(s) sous le seuil</b>
+      <div class="small">${missing.map(p=>`${esc(p.nom)} <span class="muted">(${p.qty}/${p.seuil} ${esc(p.unite||"")})</span>`).join(" · ")}</div>
+      <div class="bactions"><button id="addMissing">+ Ajouter les manquants à la liste</button></div>
+    </div>`;
+  }else if(items.length){
+    html+=`<div class="card small" style="background:var(--accent-soft); border-color:#bfe6cc; color:var(--accent); font-weight:600">✅ Tous les postes sont au-dessus du seuil</div>`;
+  }
+
+  const byCat=new Map();
+  for(const p of items){
+    const k=p.categorie||"📦 Divers";
+    if(!byCat.has(k)) byCat.set(k,[]);
+    byCat.get(k).push(p);
+  }
+  for(const [cat,arr] of [...byCat.entries()].sort((a,b)=>a[0].localeCompare(b[0],"fr"))){
+    html+=`<div class="catTitle">${esc(cat)}</div>`;
+    html+=arr.sort((a,b)=>a.nom.localeCompare(b.nom,"fr")).map(stockRow).join("");
+  }
+  html+=`<div class="card"><div class="bactions">
+    <button id="exportStock">⇪ Exporter l'inventaire</button>
+  </div><div class="small muted" style="margin-top:6px">L'export produit le CSV complet (postes, seuils, quantités) à transmettre à Claude ou à coller dans <code>data/stock.csv</code> — c'est ce qui lui permet de savoir ce qu'il te reste.</div></div>`;
+  html+=`<div id="exportBox"></div>`;
+  body.innerHTML=html;
+  bindStock(body);
+}
+function posteForm(){
+  const p = stockEdit==="new" ? {id:"",nom:"",categorie:"",unite:"pièce",seuil:1,note:""} : stockItem(stockEdit)||{};
+  return `<div class="card posteForm">
+    <b>${stockEdit==="new"?"Nouveau poste de stock":"Modifier « "+esc(p.nom)+" »"}</b>
+    ${stockEdit==="new"?`
+      <label>Nom <input id="pfNom" type="text" placeholder="ex : Pâtes sèches" value="${esc(p.nom)}"></label>
+      <label>Catégorie <input id="pfCat" type="text" placeholder="ex : 🥫 Épicerie" value="${esc(p.categorie)}"></label>
+      <label>Unité <input id="pfUnite" type="text" placeholder="kg, L, pièce, paquet" value="${esc(p.unite)}"></label>`:""}
+    <label>Seuil — quantité à toujours avoir
+      <input id="pfSeuil" type="number" inputmode="decimal" min="0" step="0.5" value="${p.seuil}"></label>
+    <div class="bactions">
+      <button id="pfSave" class="primaryBtn">Enregistrer</button>
+      <button id="pfCancel">Annuler</button>
+    </div>
+  </div>`;
+}
+function bindStock(body){
+  const on=(sel,fn)=>{ const el=body.querySelector(sel); if(el) el.onclick=fn; };
+  on("#scanBtn", openScanner);
+  on("#newPoste", ()=>{ stockEdit="new"; renderStock(); });
+  on("#pfCancel", ()=>{ stockEdit=null; renderStock(); });
+  on("#pfSave", ()=>{
+    const seuil=parseFloat((body.querySelector("#pfSeuil")||{}).value)||0;
+    if(stockEdit==="new"){
+      const nom=(body.querySelector("#pfNom")||{}).value||"";
+      if(!nom.trim()){ toast("Il faut un nom"); return; }
+      const id=slugify(nom)||("poste-"+stock.custom.length);
+      if(stockItem(id)){ toast("Ce poste existe déjà"); return; }
+      stock.custom.push({id, nom:nom.trim(),
+        categorie:((body.querySelector("#pfCat")||{}).value||"📦 Divers").trim(),
+        unite:((body.querySelector("#pfUnite")||{}).value||"pièce").trim(),
+        seuil, famille:"", note:""});
+    }else{
+      stock.seuil[stockEdit]=seuil;      // override local du seuil du CSV
+    }
+    stockEdit=null; saveStock(); render(); toast("Poste enregistré");
+  });
+  body.querySelectorAll("[data-seuil]").forEach(b=>b.onclick=()=>{ stockEdit=b.dataset.seuil; renderStock(); });
+  body.querySelectorAll("[data-inc]").forEach(b=>b.onclick=()=>{
+    const p=stockItem(b.dataset.inc); setStockQty(p.id, p.qty+stepFor(p));
+  });
+  body.querySelectorAll("[data-dec]").forEach(b=>b.onclick=()=>{
+    const p=stockItem(b.dataset.dec); setStockQty(p.id, p.qty-stepFor(p));
+  });
+  on("#addMissing", addMissingToList);
+  on("#exportStock", showStockExport);
+}
+/* Un pas de 1 pour des pièces, de 0,5 pour du poids/volume */
+function stepFor(p){ return /kg|l\b|litre/i.test(p.unite||"") ? 0.5 : 1; }
+
+function addMissingToList(){
+  const missing=missingStock();
+  if(!missing.length) return;
+  let added=0;
+  for(const p of missing){
+    /* Si le poste pointe vers une famille du catalogue, on ajoute le produit
+       le moins cher de cette famille — sinon un article libre au nom du poste. */
+    let target=null;
+    if(p.famille){
+      const cands=DATA.catalog.filter(c=>c.famille===p.famille && bestStoreFor(c,1));
+      if(cands.length){
+        cands.sort((a,b)=>{
+          const ua=unitPrice(a,bestStoreFor(a,1).cost,1), ub=unitPrice(b,bestStoreFor(b,1).cost,1);
+          return (ua?ua.v:bestStoreFor(a,1).cost)-(ub?ub.v:bestStoreFor(b,1).cost);
+        });
+        target=cands[0];
+      }
+    }
+    if(target){
+      if(!state.items.some(i=>i.catalogId===target.id)){ addItemSilent(target.id, null); added++; }
+    }else{
+      const label=`${p.nom} (${p.manque} ${p.unite||""})`.trim();
+      if(!state.items.some(i=>!i.catalogId && i.name===label)){ addItemSilent(null, label); added++; }
+    }
+  }
+  saveState(); render();
+  toast(added ? `${added} article(s) ajouté(s) à la liste` : "Déjà tous dans la liste");
+}
+function showStockExport(){
+  const box=$("#exportBox");
+  const rows=[["id","nom","categorie","unite","seuil","famille","note","quantite"].join(";")];
+  for(const p of stockItems())
+    rows.push([p.id,p.nom,p.categorie||"",p.unite||"",p.seuil,p.famille||"",p.note||"",p.qty].join(";"));
+  const csv=rows.join("\n");
+  box.innerHTML=`<div class="card">
+    <b>Inventaire au format CSV</b>
+    <div class="small muted" style="margin:4px 0 8px">Les 7 premières colonnes correspondent à <code>data/stock.csv</code> ; <code>quantite</code> est l'état du moment, à transmettre à Claude.</div>
+    <textarea class="exportTa" readonly rows="8">${esc(csv)}</textarea>
+    <div class="bactions"><button id="copyStock">📋 Copier</button><button id="closeExport">Fermer</button></div>
+  </div>`;
+  box.querySelector("#copyStock").onclick=()=>{
+    (navigator.clipboard?navigator.clipboard.writeText(csv):Promise.reject())
+      .then(()=>toast("Inventaire copié ✓"), ()=>toast("Copie impossible — sélectionne le texte"));
+  };
+  box.querySelector("#closeExport").onclick=()=>{ box.innerHTML=""; };
+  box.scrollIntoView({behavior:"smooth", block:"nearest"});
+}
+
+/* ==================== SCANNER DE CODES-BARRES ====================
+   Contrainte : sur iPhone, l'API navigateur BarcodeDetector est désactivée
+   par défaut quelle que soit la version de Safari. On passe donc par
+   html5-qrcode (décodage JS/WASM), chargé DEPUIS LE RÉSEAU et SEULEMENT à
+   l'ouverture du scanner — inutile d'alourdir le démarrage de l'app.
+
+   La saisie manuelle n'est pas un gadget : en magasin, entre la lumière,
+   les emballages froissés et les permissions caméra, elle sauve la mise. */
+const H5Q_URL="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js";
+const OFF_UA="MesCourses-Enzo/1.0";
+let h5qLoaded=false, scanner=null, scanBusy=false;
+
+function loadH5Q(){
+  if(h5qLoaded) return Promise.resolve();
+  return new Promise((res,rej)=>{
+    const s=document.createElement("script");
+    s.src=H5Q_URL;
+    s.onload=()=>{ h5qLoaded=true; res(); };
+    s.onerror=()=>rej(new Error("chargement impossible"));
+    document.head.appendChild(s);
+  });
+}
+function scanMsg(txt, err){
+  const el=document.querySelector("#scanMsg");
+  if(el){ el.textContent=txt; el.classList.toggle("err", !!err); }
+}
+function openScanner(){
+  if(document.querySelector(".scanWrap")) return;
+  const wrap=document.createElement("div");
+  wrap.className="scanWrap";
+  wrap.innerHTML=`
+    <div class="scanHead">📷 Scanner un produit <button id="scanClose" aria-label="Fermer">✕</button></div>
+    <div id="scanView"></div>
+    <div class="scanFoot">
+      <div class="scanMsg" id="scanMsg">Démarrage de la caméra…</div>
+      <div class="manual">
+        <input id="scanManual" type="text" inputmode="numeric" placeholder="ou tape le code-barres (13 chiffres)">
+        <button id="scanGo">OK</button>
+      </div>
+    </div>`;
+  document.body.appendChild(wrap);
+  wrap.querySelector("#scanClose").onclick=closeScanner;
+  wrap.querySelector("#scanGo").onclick=()=>{
+    const v=(wrap.querySelector("#scanManual").value||"").replace(/\D/g,"");
+    if(v.length<8){ scanMsg("Un code-barres fait au moins 8 chiffres.", true); return; }
+    handleBarcode(v);
+  };
+  wrap.querySelector("#scanManual").addEventListener("keydown", e=>{
+    if(e.key==="Enter") wrap.querySelector("#scanGo").click();
+  });
+
+  loadH5Q().then(()=>{
+    scanner=new Html5Qrcode("scanView", { formatsToSupport: [
+      Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.EAN_8,
+      Html5QrcodeSupportedFormats.UPC_A,  Html5QrcodeSupportedFormats.UPC_E,
+    ]});
+    return scanner.start({facingMode:"environment"},
+      {fps:10, qrbox:{width:260, height:160}},
+      code=>handleBarcode(code),
+      ()=>{});
+  }).then(()=>{
+    scanMsg("Vise le code-barres du produit.");
+  }).catch(err=>{
+    const m=String(err && err.message || err);
+    scanMsg(/chargement/.test(m)
+      ? "Impossible de charger le lecteur (pas de réseau ?). Tape le code à la main ci-dessous."
+      : "Caméra indisponible : "+m+". Tape le code à la main ci-dessous.", true);
+  });
+}
+function closeScanner(){
+  const wrap=document.querySelector(".scanWrap");
+  const done=()=>{ if(wrap) wrap.remove(); scanner=null; scanBusy=false; };
+  if(scanner){ scanner.stop().then(done).catch(done); } else done();
+}
+
+/* Open Food Facts : lecture libre, sans clé. Le navigateur interdisant de
+   fixer le User-Agent, on s'identifie via les paramètres de requête. */
+async function lookupBarcode(code){
+  const url=`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json`
+    +`?fields=code,product_name,product_name_fr,brands,quantity`
+    +`&app_name=${encodeURIComponent(OFF_UA)}`;
+  const ctl=new AbortController();
+  const to=setTimeout(()=>ctl.abort(), 8000);
+  try{
+    const r=await fetch(url,{signal:ctl.signal});
+    clearTimeout(to);
+    if(!r.ok) return null;
+    const d=await r.json();
+    if(!d || d.status!==1 || !d.product) return null;
+    const p=d.product;
+    const nom=[p.brands ? String(p.brands).split(",")[0].trim() : "",
+               p.product_name_fr || p.product_name || ""].filter(Boolean).join(" ").trim();
+    return {code, nom: nom || null, quantite: p.quantity || ""};
+  }catch(e){ clearTimeout(to); return null; }
+}
+
+async function handleBarcode(code){
+  if(scanBusy) return;
+  scanBusy=true;
+  try{
+    /* 1) Code déjà rattaché à un poste : incrément immédiat, rien à demander. */
+    const known=stock.ean[code];
+    if(known){
+      const p=stockItem(known);
+      if(p){
+        setStockQty(p.id, p.qty+stepFor(p));
+        scanMsg(`✅ ${p.nom} → ${stockItem(p.id).qty} ${p.unite||""}`);
+        setTimeout(()=>{ scanBusy=false; }, 1200);
+        return;
+      }
+      delete stock.ean[code];            // le poste a disparu, on oublie le lien
+    }
+    /* 2) Code inconnu : on demande son identité à Open Food Facts. */
+    scanMsg("Recherche du produit…");
+    const info=await lookupBarcode(code);
+    const label=info && info.nom
+      ? info.nom + (info.quantite ? ` (${info.quantite})` : "")
+      : `Code ${code}`;
+    scanMsg(info && info.nom ? `Trouvé : ${label}` : `Produit inconnu d'Open Food Facts (${code})`);
+    askStapleFor(code, label);
+  }finally{
+    if(!stock.ean[code]) scanBusy=false;
+  }
+}
+/* Rattacher un code-barres à un poste de stock (ou en créer un à la volée) */
+function askStapleFor(code, label){
+  const wrap=document.querySelector(".scanWrap"); if(!wrap) return;
+  const items=stockItems();
+  const foot=wrap.querySelector(".scanFoot");
+  foot.innerHTML=`
+    <div class="scanMsg" id="scanMsg">${esc(label)}</div>
+    <div class="small" style="margin:8px 0 6px; opacity:.8">À quel poste de stock ça correspond ?</div>
+    <div class="manual" style="flex-direction:column; gap:6px">
+      ${items.map(p=>`<button class="stapleOpt" data-st="${esc(p.id)}" style="width:100%">${esc(p.nom)} <span style="opacity:.7">(${p.qty} ${esc(p.unite||"")})</span></button>`).join("")}
+      <button class="stapleOpt" data-newst="1" style="width:100%; background:#333">+ Créer le poste « ${esc(label)} »</button>
+      <button class="stapleOpt" data-skip="1" style="width:100%; background:#333">Ignorer ce produit</button>
+    </div>`;
+  foot.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{
+    const p=stockItem(b.dataset.st);
+    stock.ean[code]=p.id;
+    setStockQty(p.id, p.qty+stepFor(p));
+    saveStock();
+    resetScanFoot(`✅ ${p.nom} → ${stockItem(p.id).qty} ${p.unite||""} · code mémorisé`);
+  });
+  foot.querySelector("[data-newst]").onclick=()=>{
+    const id=slugify(label)||("scan-"+code);
+    if(!stockItem(id))
+      stock.custom.push({id, nom:label, categorie:"📦 Divers", unite:"pièce", seuil:1, famille:"", note:""});
+    stock.ean[code]=id;
+    setStockQty(id, (stockItem(id)||{qty:0}).qty+1);
+    saveStock();
+    resetScanFoot(`✅ Poste « ${label} » créé (seuil 1, à ajuster)`);
+  };
+  foot.querySelector("[data-skip]").onclick=()=>resetScanFoot("Ignoré. Vise un autre produit.");
+}
+function resetScanFoot(msg){
+  const wrap=document.querySelector(".scanWrap"); if(!wrap) return;
+  const foot=wrap.querySelector(".scanFoot");
+  foot.innerHTML=`
+    <div class="scanMsg" id="scanMsg">${esc(msg)}</div>
+    <div class="manual">
+      <input id="scanManual" type="text" inputmode="numeric" placeholder="ou tape le code-barres (13 chiffres)">
+      <button id="scanGo">OK</button>
+    </div>`;
+  foot.querySelector("#scanGo").onclick=()=>{
+    const v=(foot.querySelector("#scanManual").value||"").replace(/\D/g,"");
+    if(v.length<8){ scanMsg("Un code-barres fait au moins 8 chiffres.", true); return; }
+    handleBarcode(v);
+  };
+  foot.querySelector("#scanManual").addEventListener("keydown", e=>{
+    if(e.key==="Enter") foot.querySelector("#scanGo").click();
+  });
+  scanBusy=false;
 }
 
 /* ---- Promos ---- */
@@ -847,9 +1321,10 @@ function popularPicks(n){
 }
 function renderList(){
   const body=$("#listBody");
+  const sug = suggestionsHtml();
   if(state.items.length===0){
     const picks=popularPicks(8);
-    body.innerHTML = `
+    body.innerHTML = sug + `
       <div class="empty">
         <div class="big">🧾</div>
         <div><b>Ta liste est vide</b></div>
@@ -860,6 +1335,7 @@ function renderList(){
           `<button class="chip" data-add="${esc(c.id)}">${esc(c.name)}${c.unit?` <span class="muted small">${esc(c.unit)}</span>`:""}</button>`
         ).join("")}</div>
       </div>`;
+    bindSuggestions(body);
     body.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>addItem(b.dataset.add,null));
     return;
   }
@@ -898,12 +1374,57 @@ function renderList(){
       if(it.cat) html+=stepBox(it);
     }
   }
-  body.innerHTML=html;
+  body.innerHTML=sug+html;
+  bindSuggestions(body);
   body.querySelectorAll(".item").forEach(el=>{
     const uid=el.dataset.uid;
     el.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>itemAction(uid,b.dataset.act));
   });
   body.querySelectorAll("[data-step]").forEach(b=>b.onclick=()=>setQty(b.dataset.step, +b.dataset.to));
+}
+
+/* ---- Suggestions de Claude ------------------------------------------
+   La liste de courses vit dans le navigateur : Claude ne peut donc pas y
+   écrire directement. Il alimente data/suggestions.csv, versionné dans le
+   repo, et l'app propose ici de les reprendre en un tap. C'est le canal
+   par lequel « Claude ajoute quelque chose à la liste ». */
+function activeSuggestions(){
+  return SUGGEST.filter(s=>
+    !stock.dismissed.includes(s.id) &&
+    !state.items.some(i=>i.catalogId===s.id || (!i.catalogId && i.name===s.nom))
+  );
+}
+function suggestionsHtml(){
+  const list=activeSuggestions();
+  if(!list.length) return "";
+  return `<div class="card sugCard">
+    <b>💡 ${list.length} suggestion(s) de Claude</b>
+    ${list.map(s=>`<div class="sugRow">
+      <span class="sugTxt"><b>${esc(s.nom)}</b>${s.raison?` <span class="muted small">— ${esc(s.raison)}</span>`:""}</span>
+      <button class="sugAdd" data-sugadd="${esc(s.id)}">+</button>
+      <button class="sugNo" data-sugno="${esc(s.id)}" aria-label="Refuser">✕</button>
+    </div>`).join("")}
+    <div class="bactions"><button data-sugall="1">+ Tout ajouter</button></div>
+  </div>`;
+}
+function bindSuggestions(body){
+  const take=s=>{
+    if(s.id && catItem(s.id)) addItemSilent(s.id, null);
+    else addItemSilent(null, s.nom);
+  };
+  body.querySelectorAll("[data-sugadd]").forEach(b=>b.onclick=()=>{
+    const s=SUGGEST.find(x=>x.id===b.dataset.sugadd); if(!s) return;
+    take(s); saveState(); render(); toast("Ajouté : "+s.nom);
+  });
+  body.querySelectorAll("[data-sugno]").forEach(b=>b.onclick=()=>{
+    stock.dismissed.push(b.dataset.sugno); saveStock(); render();
+  });
+  const all=body.querySelector("[data-sugall]");
+  if(all) all.onclick=()=>{
+    const list=activeSuggestions();
+    list.forEach(take); saveState(); render();
+    toast(`${list.length} suggestion(s) ajoutée(s)`);
+  };
 }
 
 function itemAction(uid, act){
@@ -916,6 +1437,17 @@ function itemAction(uid, act){
   saveState(); render();
 }
 
+/* Ajout sans toast ni rendu — pour les ajouts en lot (réassort de stock) */
+function addItemSilent(catalogId, freeName){
+  if(catalogId){
+    const existing = state.items.find(i=>i.catalogId===catalogId);
+    if(existing){ existing.qty++; return; }
+    const c=catItem(catalogId); if(!c) return;
+    state.items.push({uid:Date.now()+Math.random(), catalogId, name:c.name, qty:1, checked:false});
+  }else if(freeName && freeName.trim()){
+    state.items.push({uid:Date.now()+Math.random(), catalogId:null, name:freeName.trim(), qty:1, checked:false});
+  }
+}
 function addItem(catalogId, freeName){
   if(catalogId){
     const existing = state.items.find(i=>i.catalogId===catalogId);
@@ -1254,9 +1786,44 @@ async function loadData(){
   render();
 }
 
+/* Petit parseur CSV générique pour stock.csv et suggestions.csv :
+   même séparateur ";", mêmes règles (ligne vide ignorée, BOM toléré). */
+function parseRows(text){
+  const lines=text.replace(/^﻿/,"").split(/\r?\n/).filter(l=>l.trim());
+  if(lines.length<2) return [];
+  const head=lines[0].split(";").map(h=>h.trim().toLowerCase());
+  return lines.slice(1).map(l=>{
+    const c=l.split(";"); const o={};
+    head.forEach((h,i)=>o[h]=(c[i]||"").trim());
+    return o;
+  });
+}
+async function loadStockCsv(){
+  try{
+    const r=await fetch("data/stock.csv");
+    if(!r.ok) return;
+    STOCK=parseRows(await r.text())
+      .filter(o=>o.id && o.nom)
+      .map(o=>({id:o.id, nom:o.nom, categorie:o.categorie||"📦 Divers",
+                unite:o.unite||"pièce", seuil:parseFloat((o.seuil||"0").replace(",","."))||0,
+                famille:o.famille||"", note:o.note||""}));
+  }catch(e){}
+}
+async function loadSuggestions(){
+  try{
+    const r=await fetch("data/suggestions.csv");
+    if(!r.ok) return;
+    SUGGEST=parseRows(await r.text())
+      .filter(o=>o.nom)
+      .map(o=>({id:o.id||slugify(o.nom), nom:o.nom, raison:o.raison||"", date:o.date||""}));
+  }catch(e){}
+}
+
 loadState();
+loadStock();
 render();
 loadData();
+Promise.all([loadStockCsv(), loadSuggestions()]).then(render);
 </script>
 </body>
 </html>
