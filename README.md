@@ -8,8 +8,18 @@ App web mobile-first (français) pour gérer sa liste de courses, comparer les p
 |---|---|
 | 🛒 **Liste** | La liste de courses : ajout par recherche (suggestions groupées par famille), quantités, cases à cocher, persistance locale |
 | 📚 **Catalogue** | Parcourir les produits par rayon puis par famille, triés du meilleur au moins bon rapport qualité-prix, ajout en un tap. Conçu pour rester utilisable à plusieurs centaines de références |
+| 🏷 **Promos** | Toutes les promos du catalogue, triées par gain réel, en séparant les vraies bonnes affaires des trompe-l'œil |
 | ⚖️ **Comparer** | Prix des 3 enseignes article par article, promos, prix au kg/L, alternatives moins chères, et totaux par enseigne |
 | 🧺 **Paniers** | Répartition optimale entre magasins, ou classement si tu fais tout au même endroit |
+
+### Comment une promo est jugée
+
+Une remise n'est pas une bonne affaire par définition. Chaque promo est confrontée à deux références :
+
+1. **Le même produit chez les concurrents**, à quantité égale. Si un `-25 %` reste au-dessus du prix normal d'une autre enseigne, c'est un trompe-l'œil, et l'app le dit.
+2. **Le meilleur rapport de sa famille**, au prix unitaire. Un 1+1 sur des pâtes premium peut être une vraie remise tout en restant quatre fois plus cher au kilo que les pâtes ordinaires.
+
+Point clé : un `1+1` et un `2e-50` n'apportent **rien** à une seule unité. Ils sont donc évalués à leur quantité charnière (2), et la vue Liste signale le palier — « passe à 2 sans payer un centime de plus » — parce que sinon on paie le plein tarif sans profiter de la remise.
 
 ## Ce qui est réel vs simulé
 
@@ -19,9 +29,12 @@ App web mobile-first (français) pour gérer sa liste de courses, comparer les p
 | Logique de comparaison, promos (-X %, 1+1, 2ᵉ à -50 %), répartition optimale | ✅ Réel |
 | Prix unitaires (€/kg, €/L) et alternatives à quantité égale | ✅ Réel |
 | Architecture front → `data/prix.csv` → `/api/prices` → provider de données | ✅ Réel |
-| **Une partie des prix** | ⚠️ **Mixte** : Barilla et crèmerie Colruyt relevés en magasin, le reste encore simulé |
+| Analyse des promos (bonnes affaires vs trompe-l'œil, paliers 1+1) | ✅ Réel |
+| **Une partie des prix** | ⚠️ **Mixte** : 28 réf. Barilla relevées en magasin, 45 encore simulées |
 
-Le badge en haut de l'app distingue « Prix relevés » de « Prix simulés », et chaque fiche produit affiche la date et l'âge de son relevé. Le badge « Source » indique d'où viennent les données (CSV, fonction Netlify, ou fallback local).
+Le badge en haut de l'app affiche la part réellement relevée (« 28/73 relevés ») plutôt qu'un simple « Prix relevés » qui laisserait croire que tout est vérifié. Chaque fiche produit indique soit la date et l'âge de son relevé, soit « Prix simulé — jamais relevé en magasin ». Le badge « Source » indique d'où viennent les données (CSV, fonction Netlify, ou fallback local).
+
+⚠️ **Ne jamais mettre de `date_releve` sur une ligne inventée** : c'est ce qui faisait passer 45 prix simulés pour des relevés terrain.
 
 ## Déployer sur Netlify
 

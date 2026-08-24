@@ -192,6 +192,35 @@
   }
   .addP.in{background:var(--accent); border-color:var(--accent); color:#fff; font-size:15px}
 
+  /* ---- Promos ---- */
+  .promoCard{border-left:5px solid var(--line)}
+  .promoCard.deal{border-left-color:var(--accent)}
+  .promoCard.trap{border-left-color:var(--danger); opacity:.9}
+  .promoCard.unknown{border-left-color:#c7cdd6}
+  .promoRow{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:2px 0 8px}
+  .pStore{font-size:12.5px; font-weight:800}
+  .pPrice{margin-left:auto; font-size:15px}
+  .pPrice b{font-size:17px}
+  .vLine{font-size:12.5px; font-weight:600; padding:6px 8px; border-radius:9px; margin-bottom:6px}
+  .vLine.good{background:var(--accent-soft); color:var(--accent)}
+  .vLine.bad{background:#fee2e2; color:var(--danger)}
+  .vLine.unk{background:#eef2f7; color:var(--muted)}
+  .vLine.warnLine{background:var(--promo-bg); color:var(--promo); font-weight:600}
+  .promoCard .bactions{margin-top:8px}
+
+  /* ---- Palier promo ---- */
+  .step{
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    background:var(--promo-bg); border:1px solid #f0d9a8; border-radius:10px;
+    padding:8px 10px; margin-top:8px; font-size:12.5px; color:#8a5a08;
+  }
+  .step .stepTxt{flex:1; min-width:170px}
+  .item + .step{margin-top:-2px; margin-bottom:8px}
+  .stepBtn{
+    background:var(--promo); color:#fff; border:none; border-radius:8px;
+    padding:5px 11px; font-size:12px; font-weight:700; cursor:pointer;
+  }
+
   /* ---- Nav ---- */
   nav{
     position:fixed; bottom:0; left:0; right:0; z-index:30;
@@ -253,6 +282,10 @@
     <div id="catBody"></div>
   </section>
 
+  <section id="view-promos" hidden>
+    <div id="promoBody"></div>
+  </section>
+
   <section id="view-comparer" hidden>
     <div id="cmpBody"></div>
   </section>
@@ -265,6 +298,7 @@
 <nav>
   <button data-view="liste" class="on"><span class="ico">🛒</span>Liste<span class="cnt" id="navCnt" hidden></span></button>
   <button data-view="catalogue"><span class="ico">📚</span>Catalogue</button>
+  <button data-view="promos"><span class="ico">🏷</span>Promos<span class="cnt" id="navPromo" hidden></span></button>
   <button data-view="comparer"><span class="ico">⚖️</span>Comparer</button>
   <button data-view="paniers"><span class="ico">🧺</span>Paniers</button>
 </nav>
@@ -462,6 +496,114 @@ function bestStoreFor(cat, q){
   }
   return best;
 }
+/* ================== ANALYSE DES PROMOS ======================
+   Une promo n'est pas une bonne affaire par définition : chez nous,
+   -25 % sur un papier toilette peut rester au-dessus du prix normal
+   d'un concurrent. On classe donc chaque promo en la confrontant
+   (a) au meilleur prix des autres enseignes pour le MÊME produit,
+   (b) au meilleur prix unitaire de sa famille, tous produits confondus. */
+function bestOtherStore(cat, storeId, q){
+  let best=null;
+  for(const s of DATA.stores){
+    if(s.id===storeId) continue;
+    const c=cost(cat.prices[s.id], q);
+    if(c!==null && (best===null || c<best.cost)) best={store:s, cost:c};
+  }
+  return best;
+}
+/* Meilleur prix unitaire de la famille (toutes enseignes, promos incluses) */
+function bestInFamily(famille, unitType){
+  let best=null;
+  for(const c of DATA.catalog){
+    if(c.famille!==famille) continue;
+    const b=bestStoreFor(c,1); if(!b) continue;
+    const up=unitPrice(c, b.cost, 1);
+    if(!up || up.u!==unitType) continue;
+    if(!best || up.v<best.up) best={cat:c, store:b.store, up:up.v, u:up.u};
+  }
+  return best;
+}
+/* Quantité à laquelle la promo prend tout son sens : un 1+1 ou un 2ᵉ à -50 %
+   n'apporte STRICTEMENT RIEN à une unité — l'évaluer à q=1 le ferait passer
+   à tort pour un trompe-l'œil. */
+function promoQty(promo){
+  return (promo && (promo.t==="1+1" || promo.t==="2e-50")) ? 2 : 1;
+}
+/* Toutes les promos du catalogue, évaluées et triées par gain réel */
+function promoDeals(){
+  const out=[];
+  for(const cat of DATA.catalog){
+    for(const s of DATA.stores){
+      const e=cat.prices[s.id];
+      if(priceState(e)!==P_OK || !e.promo) continue;
+      const q=promoQty(e.promo);
+      const net=cost(e,q);                               // total pour q unités
+      const perUnit=net/q;
+      const other=bestOtherStore(cat, s.id, q);          // concurrents à quantité égale
+      const up=unitPrice(cat, net, q);
+      const fam=up ? bestInFamily(cat.famille, up.u) : null;
+      const betterFam = fam && up && fam.cat.id!==cat.id && fam.up < up.v*0.95 ? fam : null;
+      out.push({
+        cat, store:s, entry:e, base:e.p, q, net, perUnit, up,
+        other,                                             // meilleur concurrent, même produit
+        gain: other ? (other.cost-net)/other.cost : null,   // >0 = la promo gagne
+        verdict: other ? (net < other.cost-0.001 ? "deal" : "trap") : "unknown",
+        betterFam
+      });
+    }
+  }
+  return out.sort((a,b)=>(b.gain??-Infinity)-(a.gain??-Infinity));
+}
+
+/* Palier de promo : avec un 1+1, acheter 1 coûte exactement le même prix
+   qu'acheter 2. Avec un 2ᵉ à -50 %, le 2ᵉ est à moitié prix. L'app doit le
+   dire, sinon on paie le plein tarif sans profiter de la remise. */
+function promoStep(cat, qty){
+  if(qty%2===0) return null;                        // déjà sur un palier
+  const curBest=bestStoreFor(cat, qty);
+  if(!curBest) return null;
+  const unitNow=curBest.cost/qty;
+  const to=qty+1;
+  /* Le palier peut se trouver dans une AUTRE enseigne que la moins chère
+     actuelle : à l'unité Colruyt gagne, mais à deux le 1+1 de Delhaize passe
+     devant. On teste donc toutes les enseignes en promo, pas seulement la
+     meilleure du moment. */
+  let bestStep=null;
+  for(const s of DATA.stores){
+    const e=cat.prices[s.id];
+    if(priceState(e)!==P_OK || !e.promo) continue;
+    if(e.promo.t!=="1+1" && e.promo.t!=="2e-50") continue;
+    const next=cost(e,to);
+    if(next===null) continue;
+    const unitNext=next/to;
+    if(unitNext >= unitNow-0.001) continue;         // aucun gain réel
+    if(!bestStep || unitNext<bestStep.unitNext)
+      bestStep={store:s, to, extra:next-curBest.cost, unitNow, unitNext,
+                label:promoLabel(e.promo), from:curBest.store};
+  }
+  return bestStep;
+}
+function stepBox(it){
+  const st=promoStep(it.cat, it.qty);
+  if(!st) return "";
+  const extraTxt = st.extra<0.005
+    ? `<b>sans payer un centime de plus</b>`
+    : `pour <b>${fmt(st.extra)}</b> de plus`;
+  const move = st.from && st.from.id!==st.store.id ? ` (en passant de ${esc(st.from.name)} à ${esc(st.store.name)})` : "";
+  return `<div class="step">
+    <span class="stepTxt">🏷 ${esc(st.label)} chez ${esc(st.store.name)} — passe à ${st.to} ${extraTxt}${move} :
+      ${fmt(st.unitNext)}/u. au lieu de ${fmt(st.unitNow)}</span>
+    <button class="stepBtn" data-step="${it.uid}" data-to="${st.to}">Passer à ${st.to}</button>
+  </div>`;
+}
+function setQty(uid, q){
+  const it=state.items.find(i=>String(i.uid)===String(uid));
+  if(!it) return;
+  it.qty=Math.max(1, q);
+  saveState(); render();
+  toast(`${it.name} × ${it.qty}`);
+}
+
 /* Articles de la liste enrichis (comparables vs libres) */
 function enrichedItems(){
   return state.items.map(it=>({...it, cat: it.catalogId ? catItem(it.catalogId) : null}));
@@ -558,6 +700,7 @@ function switchView(v){
   for(const b of document.querySelectorAll("nav button")) b.classList.toggle("on", b.dataset.view===v);
   $("#view-liste").hidden = v!=="liste";
   $("#view-catalogue").hidden = v!=="catalogue";
+  $("#view-promos").hidden = v!=="promos";
   $("#view-comparer").hidden = v!=="comparer";
   $("#view-paniers").hidden = v!=="paniers";
   render();
@@ -568,10 +711,70 @@ function render(){
   const n = state.items.length;
   const cnt=$("#navCnt");
   cnt.hidden = n===0; cnt.textContent=n;
+  const deals=promoDeals().filter(d=>d.verdict==="deal").length;
+  const pb=$("#navPromo");
+  pb.hidden = deals===0; pb.textContent=deals;
   if(view==="liste") renderList();
   if(view==="catalogue") renderCatalogue();
+  if(view==="promos") renderPromos();
   if(view==="comparer") renderCompare();
   if(view==="paniers") renderBaskets();
+}
+
+/* ---- Promos ---- */
+function promoCard(d){
+  const inList=state.items.some(i=>i.catalogId===d.cat.id);
+  const upTxt = d.up ? ` · ${fmt(d.up.v)}/${UNIT_LABEL[d.up.u]}` : "";
+  const forQ = d.q>1 ? ` pour ${d.q}` : "";
+  const vs = d.q>1 ? `${esc(d.other && d.other.store.name)} à ${d.q}` : esc(d.other && d.other.store.name);
+  let verdictLine;
+  if(d.verdict==="deal")
+    verdictLine=`<div class="vLine good">✅ ${Math.round(d.gain*100)} % moins cher que ${vs} (${fmt(d.other.cost)})</div>`;
+  else if(d.verdict==="trap")
+    verdictLine=`<div class="vLine bad">❌ ${vs} reste moins cher sans promo : ${fmt(d.other.cost)}</div>`;
+  else
+    verdictLine=`<div class="vLine unk">🔍 seul prix connu — à confirmer en relevant les autres enseignes</div>`;
+  const qLine = d.q>1
+    ? `<div class="vLine unk">ℹ️ Remise effective à partir de ${d.q} unités — à l'unité, tu paies le plein tarif (${fmt(d.base)})</div>`
+    : "";
+  const famLine = d.betterFam
+    ? `<div class="vLine warnLine">💡 Meilleur rapport dans « ${esc(famLabel(d.cat.famille))} » : <b>${esc(d.betterFam.cat.name)}</b> chez ${esc(d.betterFam.store.name)} à ${fmt(d.betterFam.up)}/${UNIT_LABEL[d.betterFam.u]}</div>`
+    : "";
+  return `<div class="card promoCard ${d.verdict}">
+    <div class="cmpHead">
+      <b>${esc(d.cat.name)}</b>
+      <span class="qtyTag">${esc(d.cat.unit||"")}</span>
+    </div>
+    ${freshnessTag(d.cat)}
+    <div class="promoRow">
+      <span class="promoTag">🏷 ${promoLabel(d.entry.promo)}</span>
+      <span class="pStore" style="color:${d.store.color}">${esc(d.store.name)}</span>
+      <span class="pPrice"><span class="strike">${fmt(d.base*d.q)}</span> <b>${fmt(d.net)}</b>${forQ}<span class="muted small">${upTxt}</span></span>
+    </div>
+    ${verdictLine}
+    ${qLine}
+    ${famLine}
+    <div class="bactions">
+      <button data-addpromo="${esc(d.cat.id)}">${inList?"✓ déjà dans la liste":"+ Ajouter à la liste"}</button>
+    </div>
+  </div>`;
+}
+function renderPromos(){
+  const body=$("#promoBody");
+  const all=promoDeals();
+  if(all.length===0){
+    body.innerHTML=`<div class="empty"><div class="big">🏷</div><b>Aucune promo dans le catalogue</b><div class="small">Les promos apparaissent ici dès qu'une colonne <code>promo_*</code> est remplie dans <code>data/prix.csv</code>.</div></div>`;
+    return;
+  }
+  const deals=all.filter(d=>d.verdict==="deal");
+  const traps=all.filter(d=>d.verdict==="trap");
+  const unk=all.filter(d=>d.verdict==="unknown");
+  let html=`<div class="card small muted">${all.length} promo(s) au catalogue — <b>${deals.length}</b> réellement avantageuse(s), <b>${traps.length}</b> en trompe-l'œil${unk.length?`, ${unk.length} à confirmer`:""}. Une remise n'est une bonne affaire que si elle bat le prix normal des concurrents.</div>`;
+  if(deals.length){ html+=`<div class="catTitle">✅ Vraies bonnes affaires</div>`+deals.map(promoCard).join(""); }
+  if(unk.length){ html+=`<div class="catTitle">🔍 À confirmer</div>`+unk.map(promoCard).join(""); }
+  if(traps.length){ html+=`<div class="catTitle">❌ Trompe-l'œil</div>`+traps.map(promoCard).join(""); }
+  body.innerHTML=html;
+  body.querySelectorAll("[data-addpromo]").forEach(b=>b.onclick=()=>addItem(b.dataset.addpromo,null));
 }
 
 /* ---- Catalogue : parcours par rayon puis par famille ----
@@ -708,6 +911,7 @@ function renderList(){
         </div>
         <button class="del" data-act="del">✕</button>
       </div>`;
+      if(it.cat) html+=stepBox(it);
     }
   }
   body.innerHTML=html;
@@ -715,6 +919,7 @@ function renderList(){
     const uid=el.dataset.uid;
     el.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>itemAction(uid,b.dataset.act));
   });
+  body.querySelectorAll("[data-step]").forEach(b=>b.onclick=()=>setQty(b.dataset.step, +b.dataset.to));
 }
 
 function itemAction(uid, act){
@@ -859,6 +1064,7 @@ function renderCompare(){
       }
     }
     html+=`</div>`;
+    html+=stepBox(it);
     const alts=alternativesFor(it);
     if(alts.length){
       html+=`<div class="altBox">`+alts.map(a=>{
@@ -877,6 +1083,7 @@ function renderCompare(){
   }
   body.innerHTML=html;
   body.querySelectorAll("[data-swap]").forEach(b=>b.onclick=()=>swapItem(b.dataset.swap, b.dataset.to));
+  body.querySelectorAll("[data-step]").forEach(b=>b.onclick=()=>setQty(b.dataset.step, +b.dataset.to));
 }
 
 /* ---- Paniers ---- */
@@ -994,7 +1201,7 @@ function parseCSV(text){
     if(v.startsWith("2e")||v.startsWith("2è")) return {t:"2e-50"};
     return null;
   };
-  const catalog=[]; let lastDate="";
+  const catalog=[]; let lastDate="", nReleve=0;
   for(let i=1;i<lines.length;i++){
     const cells=lines[i].split(";");
     const g=n=>{const j=idx[n]; return j===undefined?"":(cells[j]||"").trim();};
@@ -1010,17 +1217,23 @@ function parseCSV(text){
       prices[s]=pr?{p,promo:pr}:{p};
     }
     const d=g("date_releve");
-    if(d && d>lastDate) lastDate=d;
+    if(d){ nReleve++; if(d>lastDate) lastDate=d; }
     catalog.push({id, famille:g("famille")||id, name, unit:g("unite"),
       cat:g("categorie")||"📝 Autres", prices, releve:d||null});
   }
-  return {catalog, lastDate};
+  return {catalog, lastDate, nReleve};
 }
-function setBadges(srcTxt, real){
+/* real : true = tout relevé, false = tout simulé, nombre = part relevée sur total */
+function setBadges(srcTxt, real, total){
   $("#srcBadge").textContent = srcTxt;
   const d=$("#demoBadge");
-  d.textContent = real ? "Prix relevés" : "Prix simulés";
-  d.classList.toggle("real", !!real);
+  if(typeof real === "number" && total && real>0 && real<total){
+    d.textContent = `${real}/${total} relevés`;      // catalogue mixte : ne pas mentir
+    d.classList.add("real");
+  }else{
+    d.textContent = real ? "Prix relevés" : "Prix simulés";
+    d.classList.toggle("real", !!real);
+  }
 }
 async function loadData(){
   // 1) CSV statique
@@ -1030,7 +1243,8 @@ async function loadData(){
       const d=parseCSV(await r.text());
       if(d.catalog.length){
         DATA={stores:LOCAL_DATA.stores, catalog:d.catalog};
-        setBadges(d.lastDate?"CSV · relevé du "+d.lastDate:"CSV · simulé", !!d.lastDate);
+        setBadges(d.lastDate?"CSV · dernier relevé "+frDate(d.lastDate):"CSV · simulé",
+                  d.nReleve, d.catalog.length);
         render(); return;
       }
     }
