@@ -404,6 +404,19 @@
     background:var(--accent-soft); color:var(--accent-deep);
   }
   .rank:first-of-type .medal{background:var(--accent); color:#fff}
+
+  /* ---- bandeau de coût (Liste) ---- */
+  .listTotals{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px}
+  .lt{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius-s);
+    padding:10px 8px; text-align:center; box-shadow:var(--shadow);
+  }
+  .lt.done{background:linear-gradient(135deg,#e6f8ef,#d5f2e4); border-color:var(--accent-ring)}
+  .ltLabel{font-size:10.5px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:.05em}
+  .lt.done .ltLabel{color:var(--accent-deep)}
+  .ltVal{font-size:17px; font-weight:800; margin-top:2px; font-variant-numeric:tabular-nums}
+  .lt.done .ltVal{color:var(--accent-deep)}
+  .ltSub{font-size:10.5px; color:var(--muted); margin-top:1px}
 </style>
 </head>
 <body>
@@ -460,7 +473,7 @@
 
 <nav>
   <button data-view="liste" class="on"><span class="ico" data-i="cart"></span>Liste<span class="cnt" id="navCnt" hidden></span></button>
-  <button data-view="stock"><span class="ico" data-i="box"></span>Stock<span class="cnt" id="navStock" hidden></span></button>
+  <button data-view="stock"><span class="ico" data-i="star"></span>Favoris<span class="cnt" id="navStock" hidden></span></button>
   <button data-view="catalogue"><span class="ico" data-i="book"></span>Catalogue</button>
   <button data-view="promos"><span class="ico" data-i="tag"></span>Promos<span class="cnt" id="navPromo" hidden></span></button>
   <button data-view="comparer"><span class="ico" data-i="scale"></span>Comparer</button>
@@ -760,25 +773,21 @@ function pendingRefills(){
 }
 function applyRefill(batch){
   const rows=REFILL.filter(r=>r.batch===batch);
-  let applied=0;
+  let added=0;
   for(const r of rows){
     let p=stockItem(r.poste);
     if(!p && r.nom){
-      /* le ticket contient un produit sans poste : on le crée, seuil 0
-         (présent dans l'inventaire, mais pas d'alerte tant qu'Enzo n'a
-         pas décidé d'un seuil) */
       const id=r.poste||slugify(r.nom);
-      stock.custom.push({id, nom:r.nom, categorie:"📦 Divers",
-                         unite:r.unite||"pièce", seuil:0, famille:"", note:"créé depuis un ticket"});
-      p=stockItem(id);
+      /* catégorie devinée depuis le catalogue quand il connaît le produit */
+      const m=DATA.catalog.find(c=>{const cn=norm(c.name),rn=norm(r.nom);return cn&&(rn.includes(cn)||cn.includes(rn));});
+      stock.custom.push({id, nom:r.nom, categorie:(m&&m.cat)||"📦 Divers",
+                         unite:r.unite||"pièce", seuil:0, famille:(m&&m.famille)||"", note:"ajouté depuis un ticket"});
+      added++;
     }
-    if(!p) continue;
-    stock.qty[p.id]=Math.max(0, Math.round(((stock.qty[p.id]??p.qty??0)+r.delta)*100)/100);
-    applied++;
   }
   stock.refillsDone.push(batch);
   saveStock(); render();
-  toast(`Réassort appliqué : ${applied} poste(s) mis à jour`);
+  toast(added ? `${added} produit(s) ajoutés aux favoris` : "Produits déjà dans les favoris");
 }
 function dismissRefill(batch){
   stock.refillsDone.push(batch);
@@ -796,6 +805,7 @@ const I = {
   bag:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>',
   camera:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3.2"/></svg>',
   receipt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><path d="M14 8H8"/><path d="M16 12H8"/></svg>',
+  star:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2.5 2.94 5.96 6.58.96-4.76 4.64 1.12 6.55L12 17.52l-5.88 3.09 1.12-6.55-4.76-4.64 6.58-.96L12 2.5z"/></svg>',
   search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7.5"/><path d="m21 21-4.3-4.3"/></svg>',
 };
 const $ = s => document.querySelector(s);
@@ -1128,9 +1138,7 @@ function render(){
   const deals=promoDeals().filter(d=>d.verdict==="deal").length;
   const pb=$("#navPromo");
   pb.hidden = deals===0; pb.textContent=deals;
-  const nMiss=missingStock().length;
-  const sb=$("#navStock");
-  sb.hidden = nMiss===0; sb.textContent=nMiss;
+  $("#navStock").hidden = true;   // plus d'alerte de seuil : les Favoris n'ont pas de quantités
   if(view==="liste") renderList();
   if(view==="stock") renderStock();
   if(view==="catalogue") renderCatalogue();
@@ -1139,72 +1147,87 @@ function render(){
   if(view==="paniers") renderBaskets();
 }
 
-/* ---- Inventaire ---- */
-let stockEdit = null;    // id du poste en cours d'édition de seuil, ou "new"
-function stockRow(p){
-  const ratio = p.seuil>0 ? p.qty/p.seuil : 1;
-  const cls = p.qty<=0 ? "vide" : ratio<1 ? "bas" : "ok";
-  const pct = Math.max(0, Math.min(100, p.seuil>0 ? ratio*100 : 100));
-  const u = p.unite||"";
-  return `<div class="stk ${cls}">
-    <div class="stkMain">
-      <div class="stkName">${esc(p.nom)}${p.note?` <span class="muted small">${esc(p.note)}</span>`:""}</div>
-      <div class="stkBar"><span style="width:${pct}%"></span></div>
-      <div class="stkSub">
-        <b>${p.qty}</b> ${esc(u)} en stock · seuil ${p.seuil} ${esc(u)}
-        <button class="linkBtn" data-seuil="${esc(p.id)}">modifier</button>
-      </div>
+/* ---- Favoris ------------------------------------------------------
+   Pivot assumé : le suivi des quantités ("il reste 1,5 kg de pâtes")
+   est mort-né — personne ne décompte ce qu'il mange. Cet onglet est
+   donc devenu la BASE DES PRODUITS DU FOYER : ce qu'on aime et qu'on
+   rachète. On l'enrichit par scan et par ticket, et on remplit la
+   liste de courses depuis ici, en un tap.
+   Les structures de données (stock.custom, stock.ean…) sont conservées
+   à l'identique : la synchro et les anciens appareils restent valides ;
+   qty et seuil existent toujours mais ne sont plus ni saisis ni montrés. */
+let stockEdit = null;    // id du favori en cours d'édition, ou "new"
+
+/* Rapproche un favori du catalogue de prix : par nom (inclusion dans un
+   sens ou l'autre), sinon par famille. Rend l'ajout à la liste "chiffré"
+   dès que le catalogue connaît le produit. */
+function favCatalogMatch(f){
+  const n = norm(f.nom);
+  let hit = DATA.catalog.find(c => {
+    const cn = norm(c.name);
+    return cn && (n.includes(cn) || cn.includes(n));
+  });
+  if(!hit && f.famille){
+    const cands = DATA.catalog.filter(c => c.famille===f.famille && bestStoreFor(c,1));
+    cands.sort((a,b)=>{
+      const ua=unitPrice(a,bestStoreFor(a,1).cost,1), ub=unitPrice(b,bestStoreFor(b,1).cost,1);
+      return (ua?ua.v:Infinity)-(ub?ub.v:Infinity);
+    });
+    hit = cands[0]||null;
+  }
+  return hit||null;
+}
+function addFavToList(id){
+  const f = stockItem(id); if(!f) return;
+  const m = favCatalogMatch(f);
+  if(m){ addItem(m.id, null); } else { addItem(null, f.nom); }
+}
+function favRow(f){
+  const m = favCatalogMatch(f);
+  const best = m ? bestStoreFor(m,1) : null;
+  const inList = state.items.some(i => (m && i.catalogId===m.id) || (!i.catalogId && i.name===f.nom));
+  const price = best ? `dès <b>${fmt(best.cost)}</b> chez ${esc(best.store.name)}` : `pas encore de prix relevé`;
+  return `<div class="prod">
+    <div class="pmain">
+      <div class="pname">${esc(f.nom)}</div>
+      <div class="psub">${price}</div>
     </div>
-    <div class="qty">
-      <button data-dec="${esc(p.id)}">−</button>
-      <button data-inc="${esc(p.id)}">+</button>
-    </div>
+    <button class="linkBtn" data-seuil="${esc(f.id)}">modifier</button>
+    <button class="addP ${inList?"in":""}" data-fav="${esc(f.id)}" aria-label="Ajouter ${esc(f.nom)} à la liste">${inList?"✓":"+"}</button>
   </div>`;
 }
 function renderStock(){
   const body=$("#stockBody");
   const items=stockItems();
-  const missing=missingStock();
 
   let html=`<div class="stkTools">
     <button class="primaryBtn" id="scanBtn">${I.camera} Scanner un produit</button>
-    <button id="newPoste">+ Nouveau poste</button>
+    <button id="newPoste">+ Nouveau favori</button>
   </div>`;
 
   if(stockEdit) html+=posteForm();
 
-  /* Tickets lus par Claude, en attente d'application */
+  /* Tickets lus par Claude : leurs produits rejoignent la base */
   for(const [batch,rows] of pendingRefills()){
     html+=`<div class="card refillCard">
       <b class="rcpt">${I.receipt} ${esc(batch)}</b>
       <div class="small" style="margin:6px 0 8px">${rows.map(r=>{
         const p=stockItem(r.poste);
-        return `+${r.delta} ${esc(r.unite||(p?p.unite:""))} ${esc(p?p.nom:r.nom)}${p?"":" <span class='muted'>(nouveau poste)</span>"}`;
+        return `${esc(p?p.nom:r.nom)}${p?"":" <span class='muted'>(nouveau)</span>"}`;
       }).join(" · ")}</div>
       <div class="bactions">
-        <button class="primaryBtn" data-refill="${esc(batch)}">Appliquer au stock</button>
+        <button class="primaryBtn" data-refill="${esc(batch)}">Ajouter aux favoris</button>
         <button data-norefill="${esc(batch)}">Ignorer</button>
       </div>
     </div>`;
   }
 
   if(items.length===0 && !stockEdit){
-    html+=`<div class="empty"><div class="big">${I.box}</div><b>Aucun poste de stock</b>
-      <div class="small">Un « poste » = quelque chose que vous devez toujours avoir en réserve : 2 kg de pâtes, 6 rouleaux de papier toilette, 1 L d'huile d'olive.<br><br>
-      Crée-les ici, ou dicte-les à Claude : il les écrira dans <code>data/stock.csv</code>, où ils seront versionnés et lisibles hors de l'app.</div></div>`;
+    html+=`<div class="empty"><div class="big">${I.star}</div><b>Aucun favori pour l'instant</b>
+      <div class="small">Cette base rassemble les produits que vous aimez et rachetez. Remplis-la en scannant les paquets de la maison, en photographiant un ticket pour Claude, ou à la main — puis ajoute-les à la liste en un tap.</div></div>`;
     body.innerHTML=html;
     bindStock(body);
     return;
-  }
-
-  if(missing.length){
-    html+=`<div class="card warn">
-      <b>${missing.length} poste(s) sous le seuil</b>
-      <div class="small">${missing.map(p=>`${esc(p.nom)} <span class="muted">(${p.qty}/${p.seuil} ${esc(p.unite||"")})</span>`).join(" · ")}</div>
-      <div class="bactions"><button id="addMissing">+ Ajouter les manquants à la liste</button></div>
-    </div>`;
-  }else if(items.length){
-    html+=`<div class="card small" style="background:var(--accent-soft); border-color:#bfe6cc; color:var(--accent); font-weight:600">Tous les postes sont au-dessus du seuil</div>`;
   }
 
   const byCat=new Map();
@@ -1215,137 +1238,81 @@ function renderStock(){
   }
   for(const [cat,arr] of [...byCat.entries()].sort((a,b)=>a[0].localeCompare(b[0],"fr"))){
     html+=`<div class="catTitle">${esc(cat)}</div>`;
-    html+=arr.sort((a,b)=>a.nom.localeCompare(b.nom,"fr")).map(stockRow).join("");
+    html+=arr.sort((a,b)=>a.nom.localeCompare(b.nom,"fr")).map(favRow).join("");
   }
   html+=`<div class="card"><div class="bactions">
-    <button id="exportStock">Exporter l'inventaire</button>
-  </div><div class="small muted" style="margin-top:6px">L'export produit le CSV complet (postes, seuils, quantités) à transmettre à Claude ou à coller dans <code>data/stock.csv</code> — c'est ce qui lui permet de savoir ce qu'il te reste.</div></div>`;
+    <button id="exportStock">Exporter les favoris</button>
+  </div><div class="small muted" style="margin-top:6px">L'export produit la liste complète (noms, catégories, codes-barres) à transmettre à Claude — c'est ce qui lui permet de connaître vos produits.</div></div>`;
   html+=`<div id="exportBox"></div>`;
   body.innerHTML=html;
   bindStock(body);
 }
-/* Un poste créé dans l'app (stock.custom) est entièrement éditable — y compris
-   son nom : indispensable pour renommer les « Code 5400… » que le scan crée
-   quand Open Food Facts ne connaît pas le produit. Un poste venant de
-   data/stock.csv garde son identité (elle se change dans le repo) ; seul son
-   seuil est modifiable localement. */
-function isCustomPoste(id){ return stock.custom.some(p=>p.id===id); }
 function posteForm(){
   const isNew = stockEdit==="new";
-  const p = isNew ? {id:"",nom:"",categorie:"",unite:"pièce",seuil:1,note:""} : stockItem(stockEdit)||{};
+  const p = isNew ? {id:"",nom:"",categorie:"",famille:""} : stockItem(stockEdit)||{};
   const editable = isNew || isCustomPoste(stockEdit);
   return `<div class="card posteForm">
-    <b>${isNew?"Nouveau poste de stock":"Modifier « "+esc(p.nom)+" »"}</b>
+    <b>${isNew?"Nouveau favori":"Modifier « "+esc(p.nom)+" »"}</b>
     ${editable?`
-      <label>Nom <input id="pfNom" type="text" placeholder="ex : Pâtes sèches" value="${esc(p.nom)}"></label>
-      <label>Catégorie <input id="pfCat" type="text" placeholder="ex : Épicerie" value="${esc(p.categorie)}"></label>
-      <label>Unité <input id="pfUnite" type="text" placeholder="kg, L, pièce, paquet" value="${esc(p.unite)}"></label>`
-    :`<div class="small muted" style="margin-top:6px">Ce poste vient de <code>data/stock.csv</code> — son nom se change dans le repo (demande à Claude). Ici, seul le seuil est modifiable.</div>`}
-    <label>Seuil — quantité à toujours avoir
-      <input id="pfSeuil" type="number" inputmode="decimal" min="0" step="0.5" value="${p.seuil}"></label>
+      <label>Nom (marque + produit) <input id="pfNom" type="text" placeholder="ex : Barilla Spaghetti n°5" value="${esc(p.nom)}"></label>
+      <label>Catégorie <input id="pfCat" type="text" placeholder="ex : Épicerie" value="${esc(p.categorie)}"></label>`
+    :`<div class="small muted" style="margin-top:6px">Ce favori vient de <code>data/stock.csv</code> — il se modifie dans le repo (demande à Claude).</div>`}
     <div class="bactions">
-      <button id="pfSave" class="primaryBtn">Enregistrer</button>
+      ${editable?`<button id="pfSave" class="primaryBtn">Enregistrer</button>`:""}
       ${!isNew && editable?`<button id="pfDelete" style="color:var(--danger)">Supprimer</button>`:""}
       <button id="pfCancel">Annuler</button>
     </div>
   </div>`;
 }
+function isCustomPoste(id){ return stock.custom.some(p=>p.id===id); }
 function bindStock(body){
   const on=(sel,fn)=>{ const el=body.querySelector(sel); if(el) el.onclick=fn; };
   on("#scanBtn", openScanner);
   on("#newPoste", ()=>{ stockEdit="new"; renderStock(); });
   on("#pfCancel", ()=>{ stockEdit=null; renderStock(); });
   on("#pfSave", ()=>{
-    const seuil=parseFloat((body.querySelector("#pfSeuil")||{}).value)||0;
+    const nom=((body.querySelector("#pfNom")||{}).value||"").trim();
+    if(!nom){ toast("Il faut un nom"); return; }
+    const cat=((body.querySelector("#pfCat")||{}).value||"📦 Divers").trim();
     if(stockEdit==="new"){
-      const nom=(body.querySelector("#pfNom")||{}).value||"";
-      if(!nom.trim()){ toast("Il faut un nom"); return; }
-      const id=slugify(nom)||("poste-"+stock.custom.length);
-      if(stockItem(id)){ toast("Ce poste existe déjà"); return; }
-      stock.custom.push({id, nom:nom.trim(),
-        categorie:((body.querySelector("#pfCat")||{}).value||"📦 Divers").trim(),
-        unite:((body.querySelector("#pfUnite")||{}).value||"pièce").trim(),
-        seuil, famille:"", note:""});
+      const id=slugify(nom)||("fav-"+stock.custom.length);
+      if(stockItem(id)){ toast("Ce favori existe déjà"); return; }
+      stock.custom.push({id, nom, categorie:cat, unite:"pièce", seuil:0, famille:"", note:""});
     }else if(isCustomPoste(stockEdit)){
-      /* poste créé dans l'app : tout est éditable, l'id ne bouge pas
-         (les codes-barres mémorisés pointent dessus) */
       const c=stock.custom.find(p=>p.id===stockEdit);
-      const nom=((body.querySelector("#pfNom")||{}).value||"").trim();
-      if(!nom){ toast("Il faut un nom"); return; }
-      c.nom=nom;
-      c.categorie=((body.querySelector("#pfCat")||{}).value||"📦 Divers").trim();
-      c.unite=((body.querySelector("#pfUnite")||{}).value||"pièce").trim();
-      c.seuil=seuil; delete stock.seuil[stockEdit];
-    }else{
-      stock.seuil[stockEdit]=seuil;      // override local du seuil du CSV
+      c.nom=nom; c.categorie=cat;
     }
-    stockEdit=null; saveStock(); render(); toast("Poste enregistré");
+    stockEdit=null; saveStock(); render(); toast("Favori enregistré");
   });
   on("#pfDelete", ()=>{
     const id=stockEdit;
     stock.custom=stock.custom.filter(p=>p.id!==id);
     delete stock.qty[id]; delete stock.seuil[id];
     for(const [ean,pid] of Object.entries(stock.ean)) if(pid===id) delete stock.ean[ean];
-    stockEdit=null; saveStock(); render(); toast("Poste supprimé");
+    stockEdit=null; saveStock(); render(); toast("Favori supprimé");
   });
   body.querySelectorAll("[data-seuil]").forEach(b=>b.onclick=()=>{ stockEdit=b.dataset.seuil; renderStock(); });
-  body.querySelectorAll("[data-inc]").forEach(b=>b.onclick=()=>{
-    const p=stockItem(b.dataset.inc); setStockQty(p.id, p.qty+stepFor(p));
-  });
-  body.querySelectorAll("[data-dec]").forEach(b=>b.onclick=()=>{
-    const p=stockItem(b.dataset.dec); setStockQty(p.id, p.qty-stepFor(p));
-  });
-  on("#addMissing", addMissingToList);
+  body.querySelectorAll("[data-fav]").forEach(b=>b.onclick=()=>{ addFavToList(b.dataset.fav); renderStock(); });
   on("#exportStock", showStockExport);
   body.querySelectorAll("[data-refill]").forEach(b=>b.onclick=()=>applyRefill(b.dataset.refill));
   body.querySelectorAll("[data-norefill]").forEach(b=>b.onclick=()=>dismissRefill(b.dataset.norefill));
 }
-/* Un pas de 1 pour des pièces, de 0,5 pour du poids/volume */
-function stepFor(p){ return /kg|l\b|litre/i.test(p.unite||"") ? 0.5 : 1; }
-
-function addMissingToList(){
-  const missing=missingStock();
-  if(!missing.length) return;
-  let added=0;
-  for(const p of missing){
-    /* Si le poste pointe vers une famille du catalogue, on ajoute le produit
-       le moins cher de cette famille — sinon un article libre au nom du poste. */
-    let target=null;
-    if(p.famille){
-      const cands=DATA.catalog.filter(c=>c.famille===p.famille && bestStoreFor(c,1));
-      if(cands.length){
-        cands.sort((a,b)=>{
-          const ua=unitPrice(a,bestStoreFor(a,1).cost,1), ub=unitPrice(b,bestStoreFor(b,1).cost,1);
-          return (ua?ua.v:bestStoreFor(a,1).cost)-(ub?ub.v:bestStoreFor(b,1).cost);
-        });
-        target=cands[0];
-      }
-    }
-    if(target){
-      if(!state.items.some(i=>i.catalogId===target.id)){ addItemSilent(target.id, null); added++; }
-    }else{
-      const label=`${p.nom} (${p.manque} ${p.unite||""})`.trim();
-      if(!state.items.some(i=>!i.catalogId && i.name===label)){ addItemSilent(null, label); added++; }
-    }
-  }
-  saveState(); render();
-  toast(added ? `${added} article(s) ajouté(s) à la liste` : "Déjà tous dans la liste");
-}
 function showStockExport(){
   const box=$("#exportBox");
-  const rows=[["id","nom","categorie","unite","seuil","famille","note","quantite"].join(";")];
+  const eansOf=id=>Object.entries(stock.ean).filter(([,pid])=>pid===id).map(([e])=>e).join("|");
+  const rows=[["id","nom","categorie","famille","eans"].join(";")];
   for(const p of stockItems())
-    rows.push([p.id,p.nom,p.categorie||"",p.unite||"",p.seuil,p.famille||"",p.note||"",p.qty].join(";"));
+    rows.push([p.id,p.nom,stripEmoji(p.categorie||""),p.famille||"",eansOf(p.id)].join(";"));
   const csv=rows.join("\n");
   box.innerHTML=`<div class="card">
-    <b>Inventaire au format CSV</b>
-    <div class="small muted" style="margin:4px 0 8px">Les 7 premières colonnes correspondent à <code>data/stock.csv</code> ; <code>quantite</code> est l'état du moment, à transmettre à Claude.</div>
+    <b>Favoris au format CSV</b>
+    <div class="small muted" style="margin:4px 0 8px">À transmettre à Claude pour qu'il connaisse vos produits (et leurs codes-barres).</div>
     <textarea class="exportTa" readonly rows="8">${esc(csv)}</textarea>
     <div class="bactions"><button id="copyStock">Copier</button><button id="closeExport">Fermer</button></div>
   </div>`;
   box.querySelector("#copyStock").onclick=()=>{
     (navigator.clipboard?navigator.clipboard.writeText(csv):Promise.reject())
-      .then(()=>toast("Inventaire copié ✓"), ()=>toast("Copie impossible — sélectionne le texte"));
+      .then(()=>toast("Favoris copiés ✓"), ()=>toast("Copie impossible — sélectionne le texte"));
   };
   box.querySelector("#closeExport").onclick=()=>{ box.innerHTML=""; };
   box.scrollIntoView({behavior:"smooth", block:"nearest"});
@@ -1476,18 +1443,18 @@ async function handleBarcode(code){
   lastScanAt[code]=now;
   if(scanBusy) return;               // un lookup OFF est déjà en cours
 
-  /* 1) Code connu : incrément immédiat, la caméra continue. */
+  /* 1) Code connu : le produit est déjà dans la base — on propose juste
+     de le mettre sur la liste de courses, sans rien modifier d'office. */
   const known=stock.ean[code];
   if(known){
     const p=stockItem(known);
     if(p){
-      lastAction={posteId:p.id, code, prevQty:p.qty, created:false};
-      setStockQty(p.id, p.qty+stepFor(p));
+      lastAction={posteId:p.id, code, created:false, listed:false};
       beep(false);
-      scanFeedback(`✓ ${p.nom} → ${stockItem(p.id).qty} ${p.unite||""}`);
+      scanFeedback(`✓ ${p.nom} — déjà dans vos favoris`, {listable:true});
       return;
     }
-    delete stock.ean[code];          // le poste a disparu, on oublie le lien
+    delete stock.ean[code];          // le favori a disparu, on oublie le lien
   }
 
   /* 2) Code inconnu : identité OFF puis création automatique du poste. */
@@ -1501,14 +1468,12 @@ async function handleBarcode(code){
     let id=slugify(label)||("scan-"+code);
     const existed=!!stockItem(id);
     if(!existed)
-      stock.custom.push({id, nom:label, categorie:"📦 Divers", unite:"pièce", seuil:1, famille:"", note:""});
+      stock.custom.push({id, nom:label, categorie:"📦 Divers", unite:"pièce", seuil:0, famille:"", note:""});
     stock.ean[code]=id;
-    const p=stockItem(id);
-    lastAction={posteId:id, code, prevQty:p.qty, created:!existed};
-    setStockQty(id, p.qty+1);
-    saveStock();
+    lastAction={posteId:id, code, created:!existed, listed:false};
+    saveStock(); render();
     beep(true);
-    scanFeedback(`Nouveau : ${label} → ${stockItem(id).qty}`, {correctable:true});
+    scanFeedback(`Ajouté aux favoris : ${label}`, {correctable:true, listable:true});
   }finally{
     lastScanAt[code]=Date.now();     // le lookup a pu durer : on repart de la fin
     scanBusy=false;
@@ -1525,7 +1490,8 @@ function scanFeedback(msg, opts){
     <div class="scanMsg" id="scanMsg">${esc(msg)}</div>
     ${o.quiet?"":`<div class="scanActions">
       ${lastAction?`<button id="scanUndo">↩︎ Annuler</button>`:""}
-      ${o.correctable?`<button id="scanRelink">Rattacher à un poste existant</button>`:""}
+      ${o.listable?`<button id="scanToList">+ Mettre sur la liste</button>`:""}
+      ${o.correctable?`<button id="scanRelink">C'est un doublon d'un favori</button>`:""}
     </div>`}
     <div class="manual">
       <input id="scanManual" type="text" inputmode="numeric" placeholder="ou tape le code-barres (13 chiffres)">
@@ -1533,6 +1499,12 @@ function scanFeedback(msg, opts){
     </div>`;
   const on=(sel,fn)=>{ const el=foot.querySelector(sel); if(el) el.onclick=fn; };
   on("#scanUndo", undoLastScan);
+  on("#scanToList", ()=>{
+    if(!lastAction) return;
+    addFavToList(lastAction.posteId);
+    lastAction.listed=true;
+    scanFeedback("Sur la liste ✓ — vise le produit suivant.", {quiet:true});
+  });
   on("#scanRelink", ()=>askRelink(lastAction));
   on("#scanGo", ()=>{
     const v=(foot.querySelector("#scanManual").value||"").replace(/\D/g,"");
@@ -1551,10 +1523,9 @@ function undoLastScan(){
     delete stock.qty[a.posteId]; delete stock.seuil[a.posteId];
     delete stock.ean[a.code];
     saveStock(); render();
-    scanFeedback(`↩︎ Poste supprimé. Vise le produit suivant.`, {quiet:true});
+    scanFeedback(`↩︎ Favori supprimé. Vise le produit suivant.`, {quiet:true});
   }else{
-    setStockQty(a.posteId, a.prevQty);
-    scanFeedback(`↩︎ Annulé. Vise le produit suivant.`, {quiet:true});
+    scanFeedback(`↩︎ OK. Vise le produit suivant.`, {quiet:true});
   }
 }
 /* Le poste auto-créé n'était pas le bon ? On déplace la quantité et le
@@ -1566,25 +1537,21 @@ function askRelink(action){
   const others=stockItems().filter(p=>p.id!==action.posteId);
   if(!others.length){ scanFeedback("Aucun autre poste. Continue à scanner.", {quiet:true}); return; }
   foot.innerHTML=`
-    <div class="scanMsg" id="scanMsg">Rattacher ce code à quel poste ?</div>
+    <div class="scanMsg" id="scanMsg">Ce code correspond à quel favori ?</div>
     <div class="manual" style="flex-direction:column; gap:6px">
-      ${others.map(p=>`<button class="stapleOpt" data-st="${esc(p.id)}" style="width:100%">${esc(p.nom)} <span style="opacity:.7">(${p.qty} ${esc(p.unite||"")})</span></button>`).join("")}
+      ${others.map(p=>`<button class="stapleOpt" data-st="${esc(p.id)}" style="width:100%">${esc(p.nom)}</button>`).join("")}
       <button class="stapleOpt" data-cancel="1" style="width:100%; background:#333">Laisser tel quel</button>
     </div>`;
   foot.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{
     const target=stockItem(b.dataset.st);
-    /* retire l'effet du scan sur le poste auto-créé */
     if(action.created){
       stock.custom=stock.custom.filter(p=>p.id!==action.posteId);
       delete stock.qty[action.posteId]; delete stock.seuil[action.posteId];
-    }else{
-      stock.qty[action.posteId]=action.prevQty;
     }
     stock.ean[action.code]=target.id;
-    setStockQty(target.id, target.qty+stepFor(target));
-    saveStock();
-    lastAction={posteId:target.id, code:action.code, prevQty:target.qty, created:false};
-    scanFeedback(`✓ ${target.nom} → ${stockItem(target.id).qty} ${target.unite||""} · code mémorisé`);
+    saveStock(); render();
+    lastAction={posteId:target.id, code:action.code, created:false, listed:false};
+    scanFeedback(`✓ code rattaché à « ${target.nom} »`, {listable:true});
   });
   foot.querySelector("[data-cancel]").onclick=()=>scanFeedback("OK. Vise le produit suivant.", {quiet:true});
 }
@@ -1767,13 +1734,31 @@ function renderList(){
     body.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>addItem(b.dataset.add,null));
     return;
   }
+  let html="";
   const items = enrichedItems();
+
+  /* Bandeau de coût : ce qui est déjà dans le caddie (articles cochés),
+     ce qui reste à prendre, et le total — chaque article estimé au
+     meilleur prix connu (même base que la répartition optimale des
+     Paniers). Les articles sans prix sont comptés à part, pas devinés. */
+  let doneCost=0, restCost=0, unpriced=0;
+  for(const it of items){
+    const best = it.cat ? bestStoreFor(it.cat, it.qty) : null;
+    if(!best){ unpriced++; continue; }
+    if(it.checked) doneCost += best.cost; else restCost += best.cost;
+  }
+  const nDone = items.filter(i=>i.checked).length;
+  html += `<div class="listTotals">
+    <div class="lt done"><div class="ltLabel">Dans le caddie</div><div class="ltVal">${fmt(doneCost)}</div><div class="ltSub">${nDone} article(s) coché(s)</div></div>
+    <div class="lt"><div class="ltLabel">Restant</div><div class="ltVal">${fmt(restCost)}</div><div class="ltSub">${items.length-nDone} à prendre</div></div>
+    <div class="lt"><div class="ltLabel">Total estimé</div><div class="ltVal">${fmt(doneCost+restCost)}</div><div class="ltSub">${unpriced?unpriced+" non chiffré(s)":"au meilleur prix"}</div></div>
+  </div>`;
+
   const groups = {};
   for(const it of items){
     const g = it.cat ? it.cat.cat : "📝 Autres articles";
     (groups[g]=groups[g]||[]).push(it);
   }
-  let html="";
   for(const [g,arr] of Object.entries(groups)){
     html+=`<div class="catTitle">${esc(g)}</div>`;
     for(const it of arr){

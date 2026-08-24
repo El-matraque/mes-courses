@@ -6,8 +6,8 @@ App web mobile-first (français) pour gérer sa liste de courses, comparer les p
 
 | Onglet | Rôle |
 |---|---|
-| 🛒 **Liste** | La liste de courses : ajout par recherche (suggestions groupées par famille), quantités, cases à cocher, persistance locale |
-| 🧊 **Stock** | L'inventaire : ce qu'on doit toujours avoir en réserve, ce qu'il en reste, et ce qui est passé sous le seuil. Scan de code-barres pour le remplir |
+| 🛒 **Liste** | La liste de courses : ajout par recherche, quantités, cases à cocher, et bandeau de coût en magasin (dans le caddie / restant / total estimé) |
+| ⭐ **Favoris** | La base des produits du foyer : ce qu'on aime et rachète, enrichie par scan de code-barres et tickets de caisse, pour remplir la liste en un tap |
 | 📚 **Catalogue** | Parcourir les produits par rayon puis par famille, triés du meilleur au moins bon rapport qualité-prix, ajout en un tap. Conçu pour rester utilisable à plusieurs centaines de références |
 | 🏷 **Promos** | Toutes les promos du catalogue, triées par gain réel, en séparant les vraies bonnes affaires des trompe-l'œil |
 | ⚖️ **Comparer** | Prix des 3 enseignes article par article, promos, prix au kg/L, alternatives moins chères, et totaux par enseigne |
@@ -101,18 +101,15 @@ Le cœur est une **fusion à trois états** (serveur / local / dernier état syn
 
 Synchro déclenchée : au chargement, au retour sur l'onglet, et 3 s après chaque modification. Hors-ligne, l'app fonctionne normalement en local et rattrape au retour du réseau.
 
-## Inventaire : un modèle délibérément coupé en deux
+## Favoris : la base des produits du foyer
 
-L'app est un site statique dont le backend se limite à `/api/sync`. Claude ne peut toujours rien lire dans le navigateur ni dans les Blobs. L'inventaire est découpé selon cette frontière :
+L'onglet a d'abord été un inventaire avec quantités et seuils (« il reste 1,5 kg de pâtes, seuil 2 kg »). **Abandonné volontairement** : décompter ce qu'on mange est une corvée que personne ne tient. Les structures de données (`stock.custom`, `stock.ean`, `qty`, `seuil`) sont conservées pour la compatibilité de la synchro, mais `qty`/`seuil` ne sont plus ni saisis ni affichés.
 
-| Moitié | Où | Change | Qui y a accès |
-|---|---|---|---|
-| **Les seuils** — ce qu'on doit toujours avoir | `data/stock.csv` | rarement | l'app **et** Claude |
-| **Les quantités du moment** + les codes-barres déjà rattachés | `localStorage`, synchronisé entre appareils via `/api/sync` | tous les jours | l'app seule |
+L'onglet **Favoris** est désormais la base des produits que le foyer aime et rachète :
 
-Un « poste de stock » n'est pas un produit précis mais une **réserve** : *2 kg de pâtes*, *12 rouleaux de papier toilette*, *1 L d'huile d'olive*. La colonne `famille` peut le relier à une famille du catalogue prix — l'app ajoute alors automatiquement le produit **le moins cher au kilo** de cette famille plutôt qu'un article libre.
-
-Le bouton **Exporter l'inventaire** est le pont entre les deux moitiés : il recrache postes, seuils et quantités en CSV, à transmettre à Claude ou à coller dans `data/stock.csv`.
+- **On l'enrichit** en scannant les paquets (le code-barres est mémorisé, Open Food Facts fournit marque et format), en photographiant un ticket pour Claude (`data/refill.csv` → « Ajouter aux favoris »), ou à la main.
+- **On s'en sert** pour remplir la liste de courses en un tap. Chaque favori est rapproché du catalogue de prix (par nom, sinon par famille) : si le produit y figure, l'article ajouté est chiffré et comparé ; sinon c'est un article libre.
+- `data/stock.csv` reste le canal par lequel Claude peut semer des favoris versionnés ; le bouton « Exporter les favoris » (noms, catégories, codes-barres) est le chemin inverse.
 
 ### Comment Claude ajoute des articles à la liste
 
