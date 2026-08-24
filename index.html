@@ -112,11 +112,20 @@
   .pcell.best{border-color:var(--accent); background:var(--accent-soft)}
   .pcell.best .pval{color:var(--accent)}
   .pcell.na{opacity:.45}
+  .pcell.todo{border-style:dashed; border-color:#c7cdd6; background:#fafbfc}
+  .pcell.todo .pval{color:var(--muted); font-weight:700}
+  .card.warn{background:#fffaf0; border-color:#f0d9a8}
+  .fresh{font-size:11px; font-weight:600; margin:-2px 0 8px; color:var(--muted)}
+  .fresh.ok{color:var(--accent)}
+  .fresh.mid{color:var(--promo)}
+  .fresh.old{color:var(--danger)}
+  .fresh.sim{color:var(--promo)}
   .promoTag{
     display:inline-block; background:var(--promo-bg); color:var(--promo);
     font-size:10px; font-weight:800; border-radius:6px; padding:1px 5px; margin-top:3px;
   }
   .strike{text-decoration:line-through; color:var(--muted); font-weight:500; font-size:11px; margin-right:3px}
+  .pTag{font-size:11px; opacity:.7}
   .badge.demo.real{background:var(--accent-soft); color:var(--accent)}
 
   /* ---- Alternatives ---- */
@@ -154,6 +163,34 @@
   .rank .medal{font-size:22px; width:30px; text-align:center}
   .rank .rmain{flex:1}
   .rank .rtotal{font-weight:800; font-size:17px}
+
+  /* ---- Catalogue ---- */
+  .ray{margin-bottom:8px}
+  .rayHead{
+    display:flex; width:100%; justify-content:space-between; align-items:center; gap:8px;
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:12px 14px; font-size:15px; font-weight:700; color:var(--ink); cursor:pointer; text-align:left;
+  }
+  .rayHead:active{background:var(--accent-soft)}
+  .rayN{font-size:12.5px; font-weight:700; color:var(--muted); display:flex; align-items:center; gap:7px}
+  .chev{font-size:11px}
+  .rayBody{padding:6px 0 2px}
+  .famHead{
+    font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase;
+    letter-spacing:.4px; margin:10px 6px 5px;
+  }
+  .prod{
+    display:flex; align-items:center; gap:10px; background:var(--card);
+    border:1px solid var(--line); border-radius:11px; padding:9px 11px; margin-bottom:6px;
+  }
+  .pmain{flex:1; min-width:0}
+  .pname{font-weight:600; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .psub{font-size:12px; color:var(--muted); margin-top:1px}
+  .addP{
+    width:34px; height:34px; flex:0 0 34px; border-radius:10px; border:1px solid var(--line);
+    background:var(--bg); font-size:19px; font-weight:700; color:var(--accent); cursor:pointer; line-height:1;
+  }
+  .addP.in{background:var(--accent); border-color:var(--accent); color:#fff; font-size:15px}
 
   /* ---- Nav ---- */
   nav{
@@ -206,6 +243,16 @@
     <div id="listBody"></div>
   </section>
 
+  <section id="view-catalogue" hidden>
+    <div class="addbar">
+      <div class="addrow">
+        <input id="catSearch" type="text" placeholder="Chercher dans le catalogue… (ex : fromage, chèvre)" autocomplete="off" enterkeyhint="search">
+      </div>
+    </div>
+    <div class="small muted" id="catCount" style="margin:0 4px 10px"></div>
+    <div id="catBody"></div>
+  </section>
+
   <section id="view-comparer" hidden>
     <div id="cmpBody"></div>
   </section>
@@ -217,6 +264,7 @@
 
 <nav>
   <button data-view="liste" class="on"><span class="ico">🛒</span>Liste<span class="cnt" id="navCnt" hidden></span></button>
+  <button data-view="catalogue"><span class="ico">📚</span>Catalogue</button>
   <button data-view="comparer"><span class="ico">⚖️</span>Comparer</button>
   <button data-view="paniers"><span class="ico">🧺</span>Paniers</button>
 </nav>
@@ -239,7 +287,12 @@ const LOCAL_DATA = {
     {"id": "carrefour", "name": "Carrefour", "color": "#004E9F", "url": "https://www.carrefour.be"},
     {"id": "colruyt", "name": "Colruyt", "color": "#F07D00", "url": "https://www.colruyt.be"}
   ],
-  /* prices: { <storeId>: { p: prix, promo?: {t:'pct'|'1+1'|'2e-50', v?:%} } } — null = indisponible.
+  /* prices: { <storeId>: ... } — trois états possibles, à ne pas confondre :
+       {p:prix, promo?:{t:'pct'|'1+1'|'2e-50', v?:%}}  → prix connu
+       {na:true}                                        → produit indisponible dans cette enseigne
+       null / absent                                    → prix PAS ENCORE RELEVÉ (inconnu)
+     La distinction est essentielle : un prix inconnu ne doit jamais être traité
+     comme une absence de produit, sinon les totaux par enseigne mentent.
      famille : produits similaires (alternatives). releve : date du relevé réel, null = simulé. */
   catalog: [
     {"id": "bananes", "name": "Bananes", "unit": "1 kg", "cat": "🍎 Fruits & Légumes", "prices": {"delhaize": {"p": 1.99}, "carrefour": {"p": 1.89, "promo": {"t": "pct", "v": 20}}, "colruyt": {"p": 1.75}}, "famille": "bananes"},
@@ -262,7 +315,7 @@ const LOCAL_DATA = {
     {"id": "jambon", "name": "Jambon cuit", "unit": "200 g", "cat": "🥩 Viande & Poisson", "prices": {"delhaize": {"p": 3.49}, "carrefour": {"p": 3.29}, "colruyt": {"p": 2.99}}, "famille": "jambon"},
     {"id": "pain", "name": "Pain gris tranché", "unit": "800 g", "cat": "🍞 Boulangerie", "prices": {"delhaize": {"p": 2.59}, "carrefour": {"p": 2.39}, "colruyt": {"p": 2.19}}, "famille": "pain"},
     {"id": "baguette", "name": "Baguette", "unit": "pièce", "cat": "🍞 Boulangerie", "prices": {"delhaize": {"p": 1.19}, "carrefour": {"p": 1.09}, "colruyt": {"p": 0.99}}, "famille": "baguette"},
-    {"id": "pistolets", "name": "Pistolets", "unit": "6 pièces", "cat": "🍞 Boulangerie", "prices": {"delhaize": {"p": 2.1}, "carrefour": null, "colruyt": {"p": 1.89}}, "famille": "pistolets"},
+    {"id": "pistolets", "name": "Pistolets", "unit": "6 pièces", "cat": "🍞 Boulangerie", "prices": {"delhaize": {"p": 2.1}, "carrefour": {"na": true}, "colruyt": {"p": 1.89}}, "famille": "pistolets"},
     {"id": "pates", "name": "Spaghetti", "unit": "500 g", "cat": "🥫 Épicerie", "prices": {"delhaize": {"p": 1.29}, "carrefour": {"p": 1.19, "promo": {"t": "2e-50"}}, "colruyt": {"p": 0.99}}, "famille": "pates"},
     {"id": "riz", "name": "Riz basmati", "unit": "1 kg", "cat": "🥫 Épicerie", "prices": {"delhaize": {"p": 2.99}, "carrefour": {"p": 2.79}, "colruyt": {"p": 2.59}}, "famille": "riz"},
     {"id": "sauce", "name": "Sauce tomate basilic", "unit": "420 g", "cat": "🥫 Épicerie", "prices": {"delhaize": {"p": 1.99}, "carrefour": {"p": 1.89}, "colruyt": {"p": 1.69}}, "famille": "sauce"},
@@ -311,10 +364,30 @@ const esc = s => String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"
 const catItem = id => DATA.catalog.find(c=>c.id===id) || null;
 
 /* ================== LOGIQUE PRIX & PROMOS ==================== */
+/* Trois états de prix, jamais à confondre :
+     "ok"      → prix connu, comparable
+     "na"      → produit indisponible dans cette enseigne
+     "unknown" → prix pas encore relevé
+   Un article dont un seul prix est "unknown" n'est PAS comparable :
+   l'inclure dans les totaux ferait ressortir les enseignes à égalité. */
+const P_OK="ok", P_NA="na", P_UNKNOWN="unknown";
+function priceState(entry){
+  if(!entry) return P_UNKNOWN;
+  if(entry.na) return P_NA;
+  return typeof entry.p === "number" ? P_OK : P_UNKNOWN;
+}
+/* Un article est comparable si aucune enseigne n'a de prix inconnu. */
+function isComparable(cat){
+  return !!cat && DATA.stores.every(s=>priceState(cat.prices[s.id])!==P_UNKNOWN);
+}
+/* Enseignes dont le prix reste à relever pour cet article */
+function unknownStores(cat){
+  return DATA.stores.filter(s=>priceState(cat.prices[s.id])===P_UNKNOWN);
+}
 /* Coût total pour q unités selon la promo. Exporté à l'identique
    dans tests/logic.test.mjs — garder les deux synchronisés. */
 function cost(entry, q){
-  if(!entry) return null;
+  if(priceState(entry)!==P_OK) return null;
   const p = entry.p, promo = entry.promo;
   if(!promo) return p*q;
   if(promo.t==="pct")   return p*(1-promo.v/100)*q;
@@ -329,6 +402,57 @@ function promoLabel(promo){
   if(promo.t==="2e-50") return "2ᵉ à -50%";
   return "";
 }
+/* ---- Conditionnements & prix unitaire ----
+   "150 g" → 0,15 kg · "4 × 125 g" → 0,5 kg · "6 × 1,5 L" → 9 L · "12 pièces" → 12 pc.
+   Sans ça, comparer un 150 g à un 200 g au prix du paquet n'a aucun sens. */
+function parseUnit(u){
+  if(!u) return null;
+  let s=String(u).toLowerCase().replace(/ /g," ").trim();
+  let mult=1;
+  const mm=s.match(/^(\d+)\s*[×x*]\s*(.+)$/);
+  if(mm){ mult=+mm[1]; s=mm[2].trim(); }
+  if(/^(pi[eè]ce|pc|unit[ée])s?$/.test(s)) return {q:mult, u:"pc"};
+  const m=s.match(/^(\d+(?:[.,]\d+)?)\s*(kg|g|l|cl|ml|pi[eè]ces?|pcs?|rouleaux?|sachets?|capsules?|dosettes?)?\.?$/);
+  if(!m) return null;
+  const v=parseFloat(m[1].replace(",",".")); if(!(v>0)) return null;
+  switch(m[2]){
+    case "kg": return {q:v*mult, u:"kg"};
+    case "g":  return {q:v*mult/1000, u:"kg"};
+    case "l":  return {q:v*mult, u:"L"};
+    case "cl": return {q:v*mult/100, u:"L"};
+    case "ml": return {q:v*mult/1000, u:"L"};
+    default:   return {q:v*mult, u:"pc"};
+  }
+}
+const UNIT_LABEL={kg:"kg", L:"L", pc:"pièce"};
+/* Prix pour UNE unité de mesure (kg, L, pièce) — c = coût de qty paquets */
+function unitPrice(cat, c, qty){
+  const pu=parseUnit(cat.unit);
+  if(!pu || !(pu.q>0)) return null;
+  return {v:(c/qty)/pu.q, u:pu.u};
+}
+function unitPriceLabel(cat, c, qty){
+  const up=unitPrice(cat, c, qty);
+  return up ? `${fmt(up.v)} / ${UNIT_LABEL[up.u]}` : `${fmt(c/qty)} / u.`;
+}
+
+/* ---- Fraîcheur du relevé ---- */
+function parseISO(iso){ return /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||""); }
+function daysSince(iso){
+  const m=parseISO(iso); if(!m) return null;
+  const then=Date.UTC(+m[1],+m[2]-1,+m[3]);
+  const n=new Date(), today=Date.UTC(n.getFullYear(),n.getMonth(),n.getDate());
+  return Math.max(0, Math.round((today-then)/86400000));
+}
+function frDate(iso){ const m=parseISO(iso); return m?`${m[3]}/${m[2]}/${m[1]}`:iso; }
+function freshnessTag(cat){
+  const d=cat.releve;
+  if(!d) return `<div class="fresh sim">⚠️ Prix simulé — jamais relevé en magasin</div>`;
+  const days=daysSince(d);
+  const cls = days===null ? "" : days<=14 ? "ok" : days<=45 ? "mid" : "old";
+  const age = days===null ? "" : days===0 ? " · aujourd'hui" : ` · il y a ${days} j`;
+  return `<div class="fresh ${cls}">Relevé le ${frDate(d)}${age}</div>`;
+}
 /* Meilleure enseigne pour un article donné (qty incluse) */
 function bestStoreFor(cat, q){
   let best=null;
@@ -342,17 +466,28 @@ function bestStoreFor(cat, q){
 function enrichedItems(){
   return state.items.map(it=>({...it, cat: it.catalogId ? catItem(it.catalogId) : null}));
 }
-/* Totaux par enseigne + indisponibles.
-   adj = total "équitable" : les articles indisponibles dans l'enseigne
-   sont comptés au meilleur prix ailleurs, pour comparer à panier égal. */
+/* Tri des articles de la liste en trois seaux */
+function bucketItems(items){
+  const full=[], partial=[], free=[];
+  for(const it of items){
+    if(!it.cat) free.push(it);
+    else if(isComparable(it.cat)) full.push(it);
+    else partial.push(it);
+  }
+  return {full, partial, free};
+}
+/* Totaux par enseigne — calculés UNIQUEMENT sur les articles comparables
+   (prix connu ou indisponibilité confirmée dans les 3 enseignes).
+   adj = total "équitable" : un article indisponible dans l'enseigne est
+   compté au meilleur prix ailleurs, pour comparer à panier égal. */
 function storeTotals(items){
   const res = {};
   for(const s of DATA.stores){
     let total=0, missing=[], extra=0;
     for(const it of items){
-      if(!it.cat) continue;
+      if(!it.cat || !isComparable(it.cat)) continue;
       const c = cost(it.cat.prices[s.id], it.qty);
-      if(c===null){
+      if(c===null){ // indisponibilité confirmée
         missing.push(it.name);
         const b=bestStoreFor(it.cat, it.qty);
         if(b) extra+=b.cost;
@@ -376,21 +511,33 @@ function optimalSplit(items){
   }
   return {baskets, total, unmatched};
 }
-/* Alternatives : produits de la même famille, moins chers ou en promo */
+/* Alternatives : produits de la même famille, réellement moins chers.
+   La comparaison se fait au prix unitaire (€/kg, €/L, €/pièce) — sinon un
+   150 g passerait pour moins cher qu'un 200 g au meilleur rapport. On exige
+   un gain d'au moins 5 % pour ne pas proposer d'économies à un centime. */
+const ALT_MIN_GAIN = 0.05;
 function alternativesFor(it){
   if(!it.cat || !it.cat.famille) return [];
   const cur = bestStoreFor(it.cat, it.qty);
   if(!cur) return [];
+  const curUP = unitPrice(it.cat, cur.cost, it.qty);
   return DATA.catalog
     .filter(c=>c.famille===it.cat.famille && c.id!==it.cat.id)
-    .map(c=>({c, best:bestStoreFor(c, it.qty)}))
-    .filter(a=>{
-      if(!a.best) return false;
-      const e=a.c.prices[a.best.store.id];
-      const hasPromo=!!(e && e.promo);
-      return a.best.cost < cur.cost-0.001 || (hasPromo && a.best.cost <= cur.cost+0.001);
+    .map(c=>{
+      const best=bestStoreFor(c, it.qty);
+      if(!best) return null;
+      const up=unitPrice(c, best.cost, it.qty);
+      if(curUP && up && up.u===curUP.u){
+        const gain=(curUP.v-up.v)/curUP.v;
+        return gain>=ALT_MIN_GAIN ? {c, best, up, curUP, gain} : null;
+      }
+      // conditionnements non normalisables : on ne compare qu'à format identique
+      if(String(c.unit||"")===String(it.cat.unit||"") && best.cost < cur.cost*(1-ALT_MIN_GAIN))
+        return {c, best, up:null, curUP:null, gain:(cur.cost-best.cost)/cur.cost};
+      return null;
     })
-    .sort((a,b)=>a.best.cost-b.best.cost)
+    .filter(Boolean)
+    .sort((a,b)=>b.gain-a.gain)
     .slice(0,2)
     .map(a=>({...a, save:cur.cost-a.best.cost}));
 }
@@ -410,6 +557,7 @@ function switchView(v){
   view=v;
   for(const b of document.querySelectorAll("nav button")) b.classList.toggle("on", b.dataset.view===v);
   $("#view-liste").hidden = v!=="liste";
+  $("#view-catalogue").hidden = v!=="catalogue";
   $("#view-comparer").hidden = v!=="comparer";
   $("#view-paniers").hidden = v!=="paniers";
   render();
@@ -421,8 +569,95 @@ function render(){
   const cnt=$("#navCnt");
   cnt.hidden = n===0; cnt.textContent=n;
   if(view==="liste") renderList();
+  if(view==="catalogue") renderCatalogue();
   if(view==="comparer") renderCompare();
   if(view==="paniers") renderBaskets();
+}
+
+/* ---- Catalogue : parcours par rayon puis par famille ----
+   Pensé pour tenir la charge quand le catalogue passe de 74 à 300+ réf :
+   rayons repliés par défaut, familles regroupées, recherche qui déplie. */
+let catQuery="", catOpen=new Set();
+function groupCatalog(list){
+  const byRay=new Map();
+  for(const c of list){
+    const r=c.cat||"📝 Autres";
+    if(!byRay.has(r)) byRay.set(r,new Map());
+    const fams=byRay.get(r);
+    const f=c.famille||c.id;
+    if(!fams.has(f)) fams.set(f,[]);
+    fams.get(f).push(c);
+  }
+  return byRay;
+}
+function famLabel(f){ return String(f).replace(/-/g," "); }
+function productRow(c){
+  const best=bestStoreFor(c,1);
+  const partial=!isComparable(c);
+  const inList=state.items.some(i=>i.catalogId===c.id);
+  const up = best ? unitPrice(c, best.cost, 1) : null;
+  const price = best
+    ? `<b>${fmt(best.cost)}</b> chez ${esc(best.store.name)}${up?` · ${fmt(up.v)}/${UNIT_LABEL[up.u]}`:""}${partial?" · prix partiels":""}`
+    : `aucun prix connu`;
+  return `<div class="prod">
+    <div class="pmain">
+      <div class="pname">${esc(c.name)}</div>
+      <div class="psub">${esc(c.unit||"")}${c.unit?" · ":""}${price}${partial?` <span class="pTag" title="Prix non relevés dans toutes les enseignes">🔍</span>`:""}</div>
+    </div>
+    <button class="addP ${inList?"in":""}" data-add="${esc(c.id)}" aria-label="Ajouter ${esc(c.name)}">${inList?"✓":"+"}</button>
+  </div>`;
+}
+function renderCatalogue(){
+  const body=$("#catBody"), countEl=$("#catCount");
+  const q=norm(catQuery.trim());
+  const all=DATA.catalog;
+  const hits = q ? all.filter(c=>norm(c.name).includes(q)||norm(famLabel(c.famille||"")).includes(q)) : all;
+
+  countEl.textContent = q
+    ? `${hits.length} résultat(s) pour « ${catQuery.trim()} » sur ${all.length} produits`
+    : `${all.length} produits · ${new Set(all.map(c=>c.cat||"📝 Autres")).size} rayons — touche un rayon pour l'ouvrir`;
+
+  if(hits.length===0){
+    body.innerHTML=`<div class="empty"><div class="big">🔍</div><b>Aucun produit trouvé</b><div class="small">Essaie un autre mot, ou ajoute-le comme article libre depuis l'onglet Liste.</div></div>`;
+    return;
+  }
+  const byRay=groupCatalog(hits);
+  const rayons=[...byRay.keys()].sort((a,b)=>a.localeCompare(b,"fr"));
+  let html="";
+  rayons.forEach((r,ri)=>{
+    const fams=byRay.get(r);
+    const n=[...fams.values()].reduce((a,arr)=>a+arr.length,0);
+    const open = q ? true : catOpen.has(r);
+    html+=`<div class="ray">
+      <button class="rayHead" data-ray="${ri}">
+        <span>${esc(r)}</span>
+        <span class="rayN">${n}<span class="chev">${open?"▾":"▸"}</span></span>
+      </button>`;
+    if(open){
+      html+=`<div class="rayBody">`;
+      const famKeys=[...fams.keys()].sort((a,b)=>famLabel(a).localeCompare(famLabel(b),"fr"));
+      for(const f of famKeys){
+        /* Tri par rapport qualité-prix : €/kg quand c'est calculable, sinon prix paquet */
+        const key=c=>{
+          const b=bestStoreFor(c,1); if(!b) return Infinity;
+          const up=unitPrice(c, b.cost, 1);
+          return up ? up.v : b.cost;
+        };
+        const prods=[...fams.get(f)].sort((a,b)=>key(a)-key(b));
+        if(prods.length>1) html+=`<div class="famHead">${esc(famLabel(f))} · ${prods.length}</div>`;
+        html+=prods.map(productRow).join("");
+      }
+      html+=`</div>`;
+    }
+    html+=`</div>`;
+  });
+  body.innerHTML=html;
+  body.querySelectorAll("[data-ray]").forEach(b=>b.onclick=()=>{
+    const r=rayons[+b.dataset.ray];
+    catOpen.has(r) ? catOpen.delete(r) : catOpen.add(r);
+    renderCatalogue();
+  });
+  body.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>addItem(b.dataset.add,null));
 }
 
 /* ---- Liste ---- */
@@ -453,12 +688,20 @@ function renderList(){
     html+=`<div class="catTitle">${esc(g)}</div>`;
     for(const it of arr){
       const best = it.cat ? bestStoreFor(it.cat, it.qty) : null;
+      let sub;
+      if(!it.cat)      sub = "article libre — non comparé";
+      else if(!best)   sub = esc(it.cat.unit)+" · aucun prix connu";
+      else{
+        const partial = !isComparable(it.cat);
+        sub = esc(it.cat.unit)+" · "+(partial?"dès "+fmt(best.cost/it.qty)+" chez "+esc(best.store.name)+" (prix partiels)"
+                                             :"dès "+fmt(best.cost/it.qty)+" chez "+esc(best.store.name));
+      }
       html+=`
       <div class="item ${it.checked?"checked":""}" data-uid="${it.uid}">
         <button class="ck" data-act="check">${it.checked?"✓":""}</button>
         <div class="imain">
           <div class="iname">${esc(it.name)}</div>
-          <div class="isub">${it.cat?esc(it.cat.unit)+" · dès "+fmt(best.cost/it.qty)+" chez "+esc(best.store.name):"article libre — non comparé"}</div>
+          <div class="isub">${sub}</div>
         </div>
         <div class="qty">
           <button data-act="minus">−</button><span>${it.qty}</span><button data-act="plus">+</button>
@@ -503,17 +746,45 @@ function addItem(catalogId, freeName){
 /* ---- Autocomplete ---- */
 const input=$("#addInput"), sug=$("#suggest");
 function norm(s){ return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,""); }
+/* Suggestions groupées par famille : taper "fromage" ne doit pas cracher
+   22 lignes à plat mais les familles, avec le moins cher de chaque. */
 input.addEventListener("input", ()=>{
   const q=norm(input.value);
   if(q.length<1){ sug.hidden=true; return; }
-  const hits = DATA.catalog.filter(c=>norm(c.name).includes(q)).slice(0,7);
+  const hits = DATA.catalog.filter(c=>norm(c.name).includes(q)||norm(famLabel(c.famille||"")).includes(q));
   if(hits.length===0){ sug.hidden=true; return; }
-  sug.innerHTML = hits.map(c=>{
-    const best=bestStoreFor(c,1);
-    return `<button data-id="${c.id}"><span>${esc(c.name)} <span class="muted small">· ${esc(c.unit)}</span></span><b>${fmt(best.cost)}</b></button>`;
-  }).join("");
+
+  const fams=new Map();
+  for(const c of hits){
+    const f=c.famille||c.id;
+    if(!fams.has(f)) fams.set(f,[]);
+    fams.get(f).push(c);
+  }
+  const rows=[...fams.entries()].map(([f,arr])=>{
+    const sorted=arr.map(c=>({c,best:bestStoreFor(c,1)}))
+                    .sort((a,b)=>(a.best?a.best.cost:Infinity)-(b.best?b.best.cost:Infinity));
+    return {f, pick:sorted[0], n:arr.length};
+  }).sort((a,b)=>(a.pick.best?a.pick.best.cost:Infinity)-(b.pick.best?b.pick.best.cost:Infinity))
+    .slice(0,8);
+
+  const shown=rows.reduce((a,r)=>a+r.n,0);
+  sug.innerHTML = rows.map(r=>{
+    const c=r.pick.c, best=r.pick.best;
+    const more = r.n>1 ? ` <span class="muted small">· ${r.n} réf. en ${esc(famLabel(r.f))}</span>` : "";
+    return `<button data-id="${esc(c.id)}">
+      <span>${esc(c.name)} <span class="muted small">· ${esc(c.unit||"")}</span>${more}</span>
+      <b>${best?fmt(best.cost):"—"}</b>
+    </button>`;
+  }).join("") + (hits.length>shown
+    ? `<button data-cat="1"><span class="muted small">+ ${hits.length-shown} autre(s) — voir dans le catalogue</span><b>📚</b></button>` : "");
   sug.hidden=false;
-  sug.querySelectorAll("button").forEach(b=>b.onclick=()=>{ addItem(b.dataset.id,null); input.value=""; sug.hidden=true; input.focus(); });
+  sug.querySelectorAll("button").forEach(b=>b.onclick=()=>{
+    if(b.dataset.cat){
+      catQuery=input.value; $("#catSearch").value=catQuery;
+      input.value=""; sug.hidden=true; switchView("catalogue"); return;
+    }
+    addItem(b.dataset.id,null); input.value=""; sug.hidden=true; input.focus();
+  });
 });
 input.addEventListener("keydown", e=>{
   if(e.key==="Enter"){ commitAdd(); }
@@ -533,42 +804,56 @@ function commitAdd(){
 function renderCompare(){
   const body=$("#cmpBody");
   const items=enrichedItems();
-  const comparable=items.filter(i=>i.cat);
+  const {full, partial, free}=bucketItems(items);
+  const priced=[...full, ...partial];
   if(items.length===0){
     body.innerHTML=`<div class="empty"><div class="big">⚖️</div><b>Rien à comparer</b><div class="small">Ajoute d'abord des articles à ta liste.</div></div>`;
     return;
   }
-  const totals=storeTotals(items);
-  let html=`<div class="totalsGrid">`;
-  const min=Math.min(...DATA.stores.map(s=>totals[s.id].adj));
-  for(const s of DATA.stores){
-    const t=totals[s.id];
-    html+=`<div class="tstore" style="background:${s.color}${t.adj<=min+0.001?"":"cc"}">
-      <div class="tname">${esc(s.name)}${t.adj<=min+0.001?" 🏆":""}</div>
-      <div class="tval">${fmt(t.adj)}</div>
-      ${t.missing.length?`<div class="tmiss">${t.missing.length} indispo.*</div>`:""}
-    </div>`;
+  const totals=storeTotals(full);
+  let html="";
+  if(full.length===0){
+    html+=`<div class="card warn"><b>⚠️ Comparaison impossible</b><div class="small">Aucun article de ta liste n'a ses prix relevés dans les trois enseignes. Les prix connus sont affichés ci-dessous, mais aucun total par enseigne ne serait honnête.</div></div>`;
+  }else{
+    html+=`<div class="totalsGrid">`;
+    const min=Math.min(...DATA.stores.map(s=>totals[s.id].adj));
+    for(const s of DATA.stores){
+      const t=totals[s.id];
+      html+=`<div class="tstore" style="background:${s.color}${t.adj<=min+0.001?"":"cc"}">
+        <div class="tname">${esc(s.name)}${t.adj<=min+0.001?" 🏆":""}</div>
+        <div class="tval">${fmt(t.adj)}</div>
+        ${t.missing.length?`<div class="tmiss">${t.missing.length} indispo.*</div>`:""}
+      </div>`;
+    }
+    const anyMissing=DATA.stores.some(s=>totals[s.id].missing.length);
+    html+=`</div><div class="small muted" style="margin:0 4px 10px">Total si tu achetais dans une seule enseigne, calculé sur les <b>${full.length} article(s) comparable(s)</b> — ceux dont le prix est connu (ou l'absence confirmée) dans les trois enseignes.${anyMissing?" * Articles indisponibles comptés au meilleur prix ailleurs.":""}</div>`;
   }
-  const anyMissing=DATA.stores.some(s=>totals[s.id].missing.length);
-  html+=`</div><div class="small muted" style="margin:0 4px 10px">Total si tu achetais toute la liste dans une seule enseigne (articles comparables : ${comparable.length}/${items.length}).${anyMissing?" * Articles indisponibles comptés au meilleur prix ailleurs.":""}</div>`;
+  if(partial.length){
+    html+=`<div class="card warn"><b>🔍 ${partial.length} article(s) hors comparaison</b>
+      <div class="small">Il manque des relevés : ${esc(partial.map(p=>p.name).join(", "))}. Ils sont exclus des totaux ci-dessus pour ne pas fausser le classement, mais leurs prix connus restent affichés.</div></div>`;
+  }
 
-  for(const it of comparable){
+  for(const it of priced){
     const best=bestStoreFor(it.cat,it.qty);
     html+=`<div class="card cmp">
       <div class="cmpHead"><b>${esc(it.name)}</b><span class="qtyTag">${esc(it.cat.unit)} × ${it.qty}</span></div>
+      ${freshnessTag(it.cat)}
       <div class="prow">`;
     for(const s of DATA.stores){
       const e=it.cat.prices[s.id];
+      const st=priceState(e);
       const c=cost(e,it.qty);
-      if(c===null){
+      if(st===P_NA){
         html+=`<div class="pcell na"><div class="sname">${esc(s.name)}</div><div class="pval">—</div><div class="punit">indispo.</div></div>`;
+      }else if(st===P_UNKNOWN){
+        html+=`<div class="pcell todo"><div class="sname">${esc(s.name)}</div><div class="pval">?</div><div class="punit">à relever</div></div>`;
       }else{
         const isBest = best && Math.abs(c-best.cost)<0.001;
         const hasPromo=!!e.promo;
         html+=`<div class="pcell ${isBest?"best":""}">
           <div class="sname">${esc(s.name)}</div>
           <div class="pval">${hasPromo?`<span class="strike">${fmt(e.p*it.qty)}</span>`:""}${fmt(c)}</div>
-          <div class="punit">${fmt(c/it.qty)} / u.</div>
+          <div class="punit">${unitPriceLabel(it.cat, c, it.qty)}</div>
           ${hasPromo?`<span class="promoTag">🏷 ${promoLabel(e.promo)}</span>`:""}
         </div>`;
       }
@@ -579,12 +864,14 @@ function renderCompare(){
       html+=`<div class="altBox">`+alts.map(a=>{
         const e=a.c.prices[a.best.store.id];
         const p=e&&e.promo;
-        return `<div class="alt">💡<span class="altTxt"><b>${esc(a.c.name)}</b> — ${fmt(a.best.cost)} chez ${esc(a.best.store.name)}${p?` <span class="promoTag">🏷 ${promoLabel(p)}</span>`:""}${a.save>0.001?` <span class="altSave">−${fmt(a.save)}</span>`:""}</span><button class="altBtn" data-swap="${it.uid}" data-to="${a.c.id}">Remplacer</button></div>`;
+        const detail = a.up
+          ? `${esc(a.c.unit)} · <b>${fmt(a.up.v)}/${UNIT_LABEL[a.up.u]}</b> chez ${esc(a.best.store.name)} <span class="altSave">−${Math.round(a.gain*100)}%</span> <span class="muted">(tu es à ${fmt(a.curUP.v)}/${UNIT_LABEL[a.curUP.u]})</span>`
+          : `${fmt(a.best.cost)} chez ${esc(a.best.store.name)} <span class="altSave">−${fmt(a.save)}</span>`;
+        return `<div class="alt">💡<span class="altTxt"><b>${esc(a.c.name)}</b> — ${detail}${p?` <span class="promoTag">🏷 ${promoLabel(p)}</span>`:""}</span><button class="altBtn" data-swap="${it.uid}" data-to="${a.c.id}">Remplacer</button></div>`;
       }).join("")+`</div>`;
     }
     html+=`</div>`;
   }
-  const free=items.filter(i=>!i.cat);
   if(free.length){
     html+=`<div class="catTitle">Non comparés</div><div class="card small muted">${free.map(f=>esc(f.name)).join(", ")} — articles libres, sans correspondance dans le catalogue de prix.</div>`;
   }
@@ -600,11 +887,13 @@ function renderBaskets(){
     body.innerHTML=`<div class="empty"><div class="big">🧺</div><b>Aucun panier à préparer</b><div class="small">Ajoute des articles comparables à ta liste.</div></div>`;
     return;
   }
-  const totals=storeTotals(items);
-  const split=optimalSplit(items);
+  const {full}=bucketItems(items);
+  const totals=storeTotals(full);            // classement : articles comparables uniquement
+  const split=optimalSplit(items);           // panier pratique : tout ce qui a un prix connu
+  const splitFull=optimalSplit(full);        // base honnête du calcul d'économie
   const ranked=[...DATA.stores].sort((a,b)=>totals[a.id].adj-totals[b.id].adj);
   const bestSingle=ranked[0];
-  const saving=totals[bestSingle.id].adj-split.total;
+  const saving=totals[bestSingle.id].adj-splitFull.total;
 
   let html=`<div class="toggle">
     <button class="${basketMode==="split"?"on":""}" data-mode="split">✂️ Répartition optimale</button>
@@ -615,7 +904,9 @@ function renderBaskets(){
     html+=`<div class="saveBox">
       <div class="small muted">Total optimisé (${DATA.stores.filter(s=>split.baskets[s.id].length).length} enseigne(s))</div>
       <div class="amt">${fmt(split.total)}</div>
-      <div class="small">soit <b>${fmt(Math.max(0,saving))}</b> d'économie vs tout acheter chez ${esc(bestSingle.name)} (${fmt(totals[bestSingle.id].adj)})</div>
+      <div class="small">${full.length
+        ? `dont <b>${fmt(Math.max(0,saving))}</b> d'économie vs tout acheter chez ${esc(bestSingle.name)}, calculé sur les ${full.length} article(s) comparable(s)`
+        : `aucune économie chiffrable : aucun article n'a ses prix relevés dans les trois enseignes`}</div>
     </div>`;
     for(const s of DATA.stores){
       const arr=split.baskets[s.id];
@@ -623,7 +914,7 @@ function renderBaskets(){
       const sub=arr.reduce((a,b)=>a+b.cost,0);
       html+=`<div class="card basket" style="border-left-color:${s.color}">
         <div class="bhead"><span class="bname" style="color:${s.color}">${esc(s.name)}</span><span class="btotal">${fmt(sub)}</span></div>
-        ${arr.map(it=>`<div class="bline"><span class="n">${esc(it.name)} <span class="muted">× ${it.qty}</span></span><span>${fmt(it.cost)}</span></div>`).join("")}
+        ${arr.map(it=>`<div class="bline"><span class="n">${esc(it.name)} <span class="muted">× ${it.qty}</span>${isComparable(it.cat)?"":` <span class="pTag" title="Prix non relevés dans les autres enseignes">🔍</span>`}</span><span>${fmt(it.cost)}</span></div>`).join("")}
         <div class="bactions">
           <button data-copy="${s.id}">📋 Copier la liste</button>
           <a href="${s.url}" target="_blank" rel="noopener">↗ Ouvrir ${esc(s.name)}</a>
@@ -633,8 +924,10 @@ function renderBaskets(){
     if(split.unmatched.length){
       html+=`<div class="card small muted">Non répartis : ${split.unmatched.map(f=>esc(f.name)).join(", ")}</div>`;
     }
+  }else if(full.length===0){
+    html+=`<div class="card warn"><b>⚠️ Classement impossible</b><div class="small">Aucun article de ta liste n'a ses prix relevés dans les trois enseignes — il n'y a rien à classer honnêtement. Passe en « Répartition optimale » pour voir les prix connus.</div></div>`;
   }else{
-    html+=`<div class="small muted" style="margin:0 4px 10px">Classement si tu fais toutes tes courses dans une seule enseigne :</div>`;
+    html+=`<div class="small muted" style="margin:0 4px 10px">Classement si tu fais toutes tes courses dans une seule enseigne, sur les <b>${full.length} article(s) comparable(s)</b> :</div>`;
     ranked.forEach((s,i)=>{
       const t=totals[s.id];
       html+=`<div class="card rank">
@@ -646,7 +939,7 @@ function renderBaskets(){
         <div class="rtotal">${fmt(t.adj)}</div>
       </div>`;
     });
-    html+=`<div class="card small muted">💡 Avec la répartition optimale, le total descend à <b>${fmt(split.total)}</b>.</div>`;
+    html+=`<div class="card small muted">💡 Sur ces mêmes articles, la répartition optimale descend à <b>${fmt(splitFull.total)}</b>.</div>`;
   }
   body.innerHTML=html;
   body.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{ basketMode=b.dataset.mode; renderBaskets(); });
@@ -672,12 +965,15 @@ function toast(msg){
   clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),1800);
 }
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>switchView(b.dataset.view));
+$("#catSearch").addEventListener("input", e=>{ catQuery=e.target.value; renderCatalogue(); });
 
 /* ---- Source de données ----------------------------------------
    Priorité : 1) data/prix.csv (source de vérité, éditable dans Excel)
               2) /api/prices (fonction Netlify)
               3) données locales embarquées.
-   CSV : séparateur ";", décimales "," ou ".", prix vide = indisponible,
+   CSV : séparateur ";", décimales "," ou ".",
+   prix VIDE  = pas encore relevé (l'article sort des comparaisons),
+   prix "x"   = produit indisponible dans cette enseigne (comparaison possible),
    promo = "-20%" | "1+1" | "2e-50", date_releve vide = prix simulé. */
 function parseCSV(text){
   text = text.replace(/^\uFEFF/,"");
@@ -706,8 +1002,10 @@ function parseCSV(text){
     const id=g("id")||norm(name).replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
     const prices={};
     for(const s of ["delhaize","carrefour","colruyt"]){
-      const p=num(g("prix_"+s));
-      if(p===null){ prices[s]=null; continue; }
+      const raw=g("prix_"+s).toLowerCase();
+      if(raw==="x"||raw==="-"||raw==="n/a"){ prices[s]={na:true}; continue; } // indispo. confirmée
+      const p=num(raw);
+      if(p===null){ prices[s]=null; continue; }                               // pas encore relevé
       const pr=promo(g("promo_"+s));
       prices[s]=pr?{p,promo:pr}:{p};
     }
