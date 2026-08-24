@@ -3,335 +3,414 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#16a34a">
+<meta name="theme-color" content="#0a7c56">
 <title>Mes Courses — comparateur Delhaize · Carrefour · Colruyt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
+  /* ==================================================================
+     Habillage v2 — même DOM, mêmes classes, zéro logique modifiée.
+     Typo Outfit, palette émeraude, cartes ombrées, micro-animations.
+     ================================================================== */
   :root{
-    --bg:#f6f7f9; --card:#ffffff; --ink:#1c2430; --muted:#68727f;
-    --accent:#16a34a; --accent-soft:#e7f6ec; --line:#e6e9ee;
-    --danger:#dc2626; --promo:#d97706; --promo-bg:#fef3c7;
-    --radius:14px; --nav-h:64px;
+    --bg:#eef3ef; --card:#ffffff; --ink:#1b2a22; --muted:#66786d;
+    --accent:#0e9f6e; --accent-deep:#0a7c56; --accent-soft:#e2f5ec; --accent-ring:#b5e5d2;
+    --line:#e2eae4;
+    --danger:#dc2626; --danger-soft:#fdecec;
+    --promo:#b45309; --promo-bg:#fdf3d8;
+    --info-bg:#eef4fd; --info-line:#cfe0f6;
+    --radius:18px; --radius-s:12px; --nav-h:66px;
+    --shadow:0 1px 2px rgba(20,35,27,.05), 0 10px 28px -16px rgba(20,35,27,.22);
+    --shadow-lift:0 2px 6px rgba(20,35,27,.07), 0 18px 40px -18px rgba(20,35,27,.28);
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
   html,body{margin:0; padding:0}
   body{
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-    background:var(--bg); color:var(--ink); font-size:15px; line-height:1.4;
-    padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom));
+    font-family:'Outfit',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+    background:var(--bg); color:var(--ink); font-size:15px; line-height:1.45;
+    padding-bottom:calc(var(--nav-h) + 14px + env(safe-area-inset-bottom));
   }
+  button{font-family:inherit}
+  button:active{transform:scale(.97)}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:6px}
+
+  /* ---------------- En-tête ---------------- */
   header{
-    position:sticky; top:0; z-index:20; background:var(--card);
-    border-bottom:1px solid var(--line);
-    padding:calc(10px + env(safe-area-inset-top)) 16px 10px;
+    position:sticky; top:0; z-index:20;
+    background:linear-gradient(130deg,#10b077 0%, #0a7c56 70%, #096c4c 100%);
+    padding:calc(12px + env(safe-area-inset-top)) 16px 12px;
+    box-shadow:0 6px 24px -12px rgba(9,108,76,.55);
   }
   .hrow{display:flex; align-items:center; justify-content:space-between; gap:8px; max-width:640px; margin:0 auto}
-  h1{font-size:19px; margin:0; font-weight:700}
+  h1{font-size:19px; margin:0; font-weight:800; letter-spacing:-.02em; color:#fff; white-space:nowrap; text-shadow:0 1px 2px rgba(0,0,0,.12)}
   .badges{display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end}
-  .badge{font-size:11px; font-weight:600; padding:3px 8px; border-radius:999px; white-space:nowrap}
-  .badge.demo{background:var(--promo-bg); color:var(--promo)}
-  .badge.src{background:#eef2f7; color:var(--muted)}
-  main{max-width:640px; margin:0 auto; padding:14px 14px 20px}
+  .badge{
+    font-size:11px; font-weight:700; padding:4px 10px; border-radius:999px; white-space:nowrap;
+    background:rgba(255,255,255,.16); color:#fff; border:1px solid rgba(255,255,255,.22);
+    backdrop-filter:blur(6px);
+  }
+  .badge.demo{background:rgba(255,214,102,.28); border-color:rgba(255,224,130,.5)}
+  .badge.demo.real{background:rgba(255,255,255,.2); border-color:rgba(255,255,255,.32)}
+  .badge.src{opacity:.85; font-weight:600}
+  .badge.sync{border:1px solid rgba(255,255,255,.25); cursor:pointer; font-family:inherit}
+  .badge.sync.off{background:rgba(0,0,0,.18); opacity:.9}
+  .badge.sync.ok{background:rgba(255,255,255,.24)}
+  .badge.sync.err{background:#e02424; border-color:#f98080}
+  .badge.sync.busy{background:rgba(255,214,102,.35)}
+
+  main{max-width:640px; margin:0 auto; padding:16px 14px 24px}
+  @keyframes rise{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none}}
+  main section{animation:rise .26s ease both}
+  @media (prefers-reduced-motion: reduce){ main section{animation:none} button:active{transform:none} }
   section[hidden]{display:none}
-  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:12px; margin-bottom:10px}
+
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:14px; margin-bottom:12px; box-shadow:var(--shadow);
+  }
   .muted{color:var(--muted)}
   .small{font-size:12.5px}
-  .empty{ text-align:center; padding:36px 16px; color:var(--muted)}
-  .empty .big{font-size:40px; margin-bottom:8px}
+  .empty{text-align:center; padding:44px 18px; color:var(--muted)}
+  .empty .big{font-size:52px; margin-bottom:12px; filter:drop-shadow(0 6px 12px rgba(20,35,27,.12))}
+  .empty b{color:var(--ink); font-size:17px}
+  code{background:var(--accent-soft); color:var(--accent-deep); padding:1px 5px; border-radius:6px; font-size:.9em}
 
-  /* ---- Ajout rapide ---- */
-  .addbar{position:relative; margin-bottom:12px}
+  /* ---------------- Ajout rapide ---------------- */
+  .addbar{position:relative; margin-bottom:14px}
   .addrow{display:flex; gap:8px}
   .addrow input{
-    flex:1; font-size:16px; padding:12px 14px; border:1px solid var(--line);
-    border-radius:var(--radius); background:var(--card); color:var(--ink); outline:none;
+    flex:1; font-size:16px; font-family:inherit; padding:13px 16px; border:1.5px solid var(--line);
+    border-radius:999px; background:var(--card); color:var(--ink); outline:none;
+    box-shadow:var(--shadow); transition:border-color .15s;
   }
+  .addrow input::placeholder{color:#9aab9f}
   .addrow input:focus{border-color:var(--accent)}
   .addrow button{
-    background:var(--accent); color:#fff; border:none; border-radius:var(--radius);
-    font-size:22px; width:48px; flex:0 0 48px; cursor:pointer; font-weight:700;
+    background:linear-gradient(135deg,#12b77c,#0a7c56); color:#fff; border:none; border-radius:999px;
+    font-size:24px; width:50px; flex:0 0 50px; cursor:pointer; font-weight:700;
+    box-shadow:0 6px 16px -6px rgba(10,124,86,.55);
   }
   .suggest{
-    position:absolute; left:0; right:0; top:calc(100% + 4px); z-index:15;
+    position:absolute; left:0; right:0; top:calc(100% + 6px); z-index:15;
     background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
-    box-shadow:0 8px 24px rgba(0,0,0,.10); overflow:hidden; max-height:280px; overflow-y:auto;
+    box-shadow:var(--shadow-lift); overflow:hidden; max-height:300px; overflow-y:auto;
   }
   .suggest button{
     display:flex; width:100%; justify-content:space-between; align-items:center; gap:8px;
     background:none; border:none; border-bottom:1px solid var(--line);
-    padding:11px 14px; font-size:15px; text-align:left; cursor:pointer; color:var(--ink);
+    padding:12px 15px; font-size:15px; text-align:left; cursor:pointer; color:var(--ink);
   }
   .suggest button:last-child{border-bottom:none}
   .suggest button:active{background:var(--accent-soft)}
-  .chips{display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; justify-content:center}
+  .suggest b{font-variant-numeric:tabular-nums}
+  .chips{display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; justify-content:center}
   .chip{
-    background:var(--card); border:1px solid var(--line); border-radius:999px;
-    padding:8px 14px; font-size:14px; cursor:pointer; color:var(--ink);
+    background:var(--card); border:1.5px solid var(--line); border-radius:999px;
+    padding:9px 15px; font-size:13.5px; font-weight:600; cursor:pointer; color:var(--ink);
+    box-shadow:var(--shadow);
   }
   .chip:active{background:var(--accent-soft); border-color:var(--accent)}
 
-  /* ---- Liste ---- */
-  .catTitle{font-size:13px; font-weight:700; color:var(--muted); margin:16px 4px 6px; text-transform:uppercase; letter-spacing:.4px}
-  .item{
-    display:flex; align-items:center; gap:10px; background:var(--card);
-    border:1px solid var(--line); border-radius:var(--radius); padding:10px 12px; margin-bottom:8px;
+  /* ---------------- Liste ---------------- */
+  .catTitle{
+    font-size:12px; font-weight:800; color:var(--muted); margin:20px 6px 8px;
+    text-transform:uppercase; letter-spacing:.08em;
   }
+  .item{
+    display:flex; align-items:center; gap:12px; background:var(--card);
+    border:1px solid var(--line); border-radius:var(--radius); padding:12px 14px; margin-bottom:9px;
+    box-shadow:var(--shadow); transition:opacity .2s;
+  }
+  .item.checked{opacity:.62}
   .item.checked .iname{text-decoration:line-through; color:var(--muted)}
   .ck{
-    width:24px; height:24px; flex:0 0 24px; border:2px solid var(--line); border-radius:8px;
+    width:27px; height:27px; flex:0 0 27px; border:2px solid #c6d4ca; border-radius:999px;
     background:var(--card); cursor:pointer; display:flex; align-items:center; justify-content:center;
-    font-size:14px; color:#fff; padding:0;
+    font-size:14px; color:#fff; padding:0; transition:background .15s, border-color .15s;
   }
   .item.checked .ck{background:var(--accent); border-color:var(--accent)}
   .imain{flex:1; min-width:0}
   .iname{font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
-  .isub{font-size:12px; color:var(--muted)}
-  .qty{display:flex; align-items:center; gap:2px}
+  .isub{font-size:12.5px; color:var(--muted); margin-top:1px}
+  .qty{display:flex; align-items:center; gap:3px}
   .qty button{
-    width:30px; height:30px; border-radius:9px; border:1px solid var(--line);
-    background:var(--bg); font-size:17px; cursor:pointer; color:var(--ink); line-height:1;
+    width:32px; height:32px; border-radius:999px; border:1.5px solid var(--line);
+    background:var(--bg); font-size:17px; cursor:pointer; color:var(--ink); line-height:1; font-weight:600;
   }
-  .qty span{min-width:24px; text-align:center; font-weight:700}
-  .del{background:none; border:none; color:var(--muted); font-size:17px; cursor:pointer; padding:4px}
+  .qty span{min-width:26px; text-align:center; font-weight:800; font-variant-numeric:tabular-nums}
+  .del{background:none; border:none; color:#b0bfb5; font-size:17px; cursor:pointer; padding:6px}
 
-  /* ---- Comparateur ---- */
-  .totalsGrid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px}
-  .tstore{border-radius:var(--radius); padding:10px 8px; text-align:center; color:#fff}
-  .tstore .tname{font-size:12px; font-weight:700; opacity:.95}
-  .tstore .tval{font-size:17px; font-weight:800; margin-top:2px}
+  /* ---------------- Comparateur ---------------- */
+  .totalsGrid{display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-bottom:12px}
+  .tstore{border-radius:var(--radius-s); padding:12px 8px; text-align:center; color:#fff; box-shadow:var(--shadow)}
+  .tstore .tname{font-size:12px; font-weight:800; opacity:.95}
+  .tstore .tval{font-size:18px; font-weight:800; margin-top:2px; font-variant-numeric:tabular-nums}
   .tstore .tmiss{font-size:10.5px; opacity:.9; margin-top:2px}
-  .cmp{margin-bottom:10px}
+  .cmp{margin-bottom:12px}
   .cmpHead{display:flex; justify-content:space-between; align-items:baseline; gap:8px; margin-bottom:8px}
-  .cmpHead .qtyTag{font-size:12px; color:var(--muted); white-space:nowrap}
-  .prow{display:grid; grid-template-columns:repeat(3,1fr); gap:6px}
+  .cmpHead b{font-size:15.5px}
+  .cmpHead .qtyTag{font-size:12px; color:var(--muted); white-space:nowrap; font-weight:600}
+  .prow{display:grid; grid-template-columns:repeat(3,1fr); gap:7px}
   .pcell{
-    border:1.5px solid var(--line); border-radius:10px; padding:7px 6px; text-align:center; position:relative;
+    border:1.5px solid var(--line); border-radius:var(--radius-s); padding:9px 6px; text-align:center;
+    background:#fafcfa;
   }
-  .pcell .sname{font-size:11px; font-weight:700; color:var(--muted)}
-  .pcell .pval{font-size:15px; font-weight:800; margin-top:1px}
+  .pcell .sname{font-size:11px; font-weight:800; color:var(--muted)}
+  .pcell .pval{font-size:15px; font-weight:800; margin-top:2px; font-variant-numeric:tabular-nums}
   .pcell .punit{font-size:10.5px; color:var(--muted)}
-  .pcell.best{border-color:var(--accent); background:var(--accent-soft)}
-  .pcell.best .pval{color:var(--accent)}
-  .pcell.na{opacity:.45}
-  .pcell.todo{border-style:dashed; border-color:#c7cdd6; background:#fafbfc}
+  .pcell.best{border-color:var(--accent); background:var(--accent-soft); box-shadow:0 0 0 3px var(--accent-ring) inset}
+  .pcell.best .pval{color:var(--accent-deep)}
+  .pcell.na{opacity:.42}
+  .pcell.todo{border-style:dashed; border-color:#c3d1c8; background:#f6f9f7}
   .pcell.todo .pval{color:var(--muted); font-weight:700}
-  .card.warn{background:#fffaf0; border-color:#f0d9a8}
-  .fresh{font-size:11px; font-weight:600; margin:-2px 0 8px; color:var(--muted)}
-  .fresh.ok{color:var(--accent)}
+  .card.warn{background:#fffaf0; border-color:#f3dfae}
+  .fresh{font-size:11px; font-weight:700; margin:-2px 0 8px; color:var(--muted)}
+  .fresh.ok{color:var(--accent-deep)}
   .fresh.mid{color:var(--promo)}
   .fresh.old{color:var(--danger)}
   .fresh.sim{color:var(--promo)}
   .promoTag{
     display:inline-block; background:var(--promo-bg); color:var(--promo);
-    font-size:10px; font-weight:800; border-radius:6px; padding:1px 5px; margin-top:3px;
+    font-size:10px; font-weight:800; border-radius:6px; padding:2px 6px; margin-top:3px;
   }
   .strike{text-decoration:line-through; color:var(--muted); font-weight:500; font-size:11px; margin-right:3px}
   .pTag{font-size:11px; opacity:.7}
-  .badge.demo.real{background:var(--accent-soft); color:var(--accent)}
-  .badge.sync{border:none; cursor:pointer; font-family:inherit}
-  .badge.sync.off{background:#eef2f7; color:var(--muted)}
-  .badge.sync.ok{background:var(--accent-soft); color:var(--accent)}
-  .badge.sync.err{background:#fee2e2; color:var(--danger)}
-  .badge.sync.busy{background:var(--promo-bg); color:var(--promo)}
 
-  /* ---- Alternatives ---- */
-  .altBox{margin-top:8px; border-top:1px dashed var(--line); padding-top:8px; display:flex; flex-direction:column; gap:6px}
-  .alt{display:flex; align-items:center; gap:6px; font-size:12.5px; flex-wrap:wrap}
+  .altBox{margin-top:10px; border-top:1.5px dashed var(--line); padding-top:10px; display:flex; flex-direction:column; gap:7px}
+  .alt{display:flex; align-items:center; gap:7px; font-size:12.5px; flex-wrap:wrap}
   .alt .altTxt{flex:1; min-width:180px}
-  .altSave{color:var(--accent); font-weight:800}
+  .altSave{color:var(--accent-deep); font-weight:800}
   .altBtn{
-    background:var(--accent); color:#fff; border:none; border-radius:8px;
-    padding:5px 10px; font-size:12px; font-weight:700; cursor:pointer;
+    background:var(--accent); color:#fff; border:none; border-radius:999px;
+    padding:6px 13px; font-size:12px; font-weight:700; cursor:pointer;
+    box-shadow:0 4px 10px -4px rgba(10,124,86,.5);
   }
 
-  /* ---- Paniers ---- */
-  .toggle{display:flex; background:var(--card); border:1px solid var(--line); border-radius:999px; padding:3px; margin-bottom:12px}
-  .toggle button{
-    flex:1; border:none; background:none; padding:9px 6px; border-radius:999px;
-    font-size:13.5px; font-weight:600; color:var(--muted); cursor:pointer;
+  /* ---------------- Palier promo ---------------- */
+  .step{
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    background:var(--promo-bg); border:1px solid #f0dcA5; border-radius:var(--radius-s);
+    padding:10px 12px; margin-top:8px; font-size:12.5px; color:#8a5a08;
   }
-  .toggle button.on{background:var(--accent); color:#fff}
+  .step .stepTxt{flex:1; min-width:170px}
+  .item + .step{margin-top:-3px; margin-bottom:10px}
+  .stepBtn{
+    background:var(--promo); color:#fff; border:none; border-radius:999px;
+    padding:6px 13px; font-size:12px; font-weight:700; cursor:pointer;
+  }
+
+  /* ---------------- Paniers ---------------- */
+  .toggle{display:flex; background:var(--card); border:1px solid var(--line); border-radius:999px; padding:4px; margin-bottom:14px; box-shadow:var(--shadow)}
+  .toggle button{
+    flex:1; border:none; background:none; padding:10px 6px; border-radius:999px;
+    font-size:13.5px; font-weight:700; color:var(--muted); cursor:pointer; transition:background .15s,color .15s;
+  }
+  .toggle button.on{background:var(--accent); color:#fff; box-shadow:0 4px 10px -4px rgba(10,124,86,.5)}
   .basket{border-left:5px solid var(--line)}
   .bhead{display:flex; justify-content:space-between; align-items:center; margin-bottom:6px}
   .bhead .bname{font-weight:800; font-size:16px}
-  .bhead .btotal{font-weight:800; font-size:16px}
-  .bline{display:flex; justify-content:space-between; gap:8px; padding:5px 0; border-bottom:1px dashed var(--line); font-size:14px}
+  .bhead .btotal{font-weight:800; font-size:16px; font-variant-numeric:tabular-nums}
+  .bline{display:flex; justify-content:space-between; gap:8px; padding:6px 0; border-bottom:1px dashed var(--line); font-size:14px}
   .bline:last-of-type{border-bottom:none}
   .bline .n{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
-  .bactions{display:flex; gap:8px; margin-top:10px}
+  .bline span:last-child{font-variant-numeric:tabular-nums}
+  .bactions{display:flex; gap:8px; margin-top:12px}
   .bactions button, .bactions a{
-    flex:1; text-align:center; padding:9px 8px; border-radius:10px; font-size:13px; font-weight:700;
-    border:1px solid var(--line); background:var(--bg); color:var(--ink); cursor:pointer; text-decoration:none;
+    flex:1; text-align:center; padding:11px 8px; border-radius:999px; font-size:13px; font-weight:700;
+    border:1.5px solid var(--line); background:var(--bg); color:var(--ink); cursor:pointer; text-decoration:none;
   }
-  .saveBox{background:var(--accent-soft); border:1px solid #bfe6cc; border-radius:var(--radius); padding:12px; margin-bottom:12px; text-align:center}
-  .saveBox .amt{font-size:22px; font-weight:800; color:var(--accent)}
-  .rank{display:flex; align-items:center; gap:10px}
-  .rank .medal{font-size:22px; width:30px; text-align:center}
+  .saveBox{
+    background:linear-gradient(135deg,#e6f8ef,#d5f2e4); border:1px solid var(--accent-ring);
+    border-radius:var(--radius); padding:16px; margin-bottom:14px; text-align:center; box-shadow:var(--shadow);
+  }
+  .saveBox .amt{font-size:26px; font-weight:800; color:var(--accent-deep); font-variant-numeric:tabular-nums}
+  .rank{display:flex; align-items:center; gap:12px}
   .rank .rmain{flex:1}
-  .rank .rtotal{font-weight:800; font-size:17px}
+  .rank .rtotal{font-weight:800; font-size:17px; font-variant-numeric:tabular-nums}
 
-  /* ---- Catalogue ---- */
-  .ray{margin-bottom:8px}
+  /* ---------------- Catalogue ---------------- */
+  .ray{margin-bottom:9px}
   .rayHead{
     display:flex; width:100%; justify-content:space-between; align-items:center; gap:8px;
     background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
-    padding:12px 14px; font-size:15px; font-weight:700; color:var(--ink); cursor:pointer; text-align:left;
+    padding:14px 16px; font-size:15px; font-weight:700; color:var(--ink); cursor:pointer; text-align:left;
+    box-shadow:var(--shadow);
   }
   .rayHead:active{background:var(--accent-soft)}
-  .rayN{font-size:12.5px; font-weight:700; color:var(--muted); display:flex; align-items:center; gap:7px}
-  .chev{font-size:11px}
-  .rayBody{padding:6px 0 2px}
+  .rayN{font-size:12.5px; font-weight:800; color:var(--muted); display:flex; align-items:center; gap:8px}
+  .chev{font-size:11px; color:var(--accent)}
+  .rayBody{padding:8px 0 2px}
   .famHead{
-    font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase;
-    letter-spacing:.4px; margin:10px 6px 5px;
+    font-size:11.5px; font-weight:800; color:var(--muted); text-transform:uppercase;
+    letter-spacing:.07em; margin:12px 8px 6px;
   }
   .prod{
     display:flex; align-items:center; gap:10px; background:var(--card);
-    border:1px solid var(--line); border-radius:11px; padding:9px 11px; margin-bottom:6px;
+    border:1px solid var(--line); border-radius:14px; padding:10px 12px; margin-bottom:7px;
+    box-shadow:var(--shadow);
   }
   .pmain{flex:1; min-width:0}
   .pname{font-weight:600; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
   .psub{font-size:12px; color:var(--muted); margin-top:1px}
+  .psub b{font-variant-numeric:tabular-nums}
   .addP{
-    width:34px; height:34px; flex:0 0 34px; border-radius:10px; border:1px solid var(--line);
-    background:var(--bg); font-size:19px; font-weight:700; color:var(--accent); cursor:pointer; line-height:1;
+    width:38px; height:38px; flex:0 0 38px; border-radius:999px; border:1.5px solid var(--accent-ring);
+    background:var(--accent-soft); font-size:20px; font-weight:700; color:var(--accent-deep); cursor:pointer; line-height:1;
   }
   .addP.in{background:var(--accent); border-color:var(--accent); color:#fff; font-size:15px}
 
-  /* ---- Inventaire ---- */
-  .stkTools{display:flex; gap:8px; margin-bottom:12px}
+  /* ---------------- Inventaire ---------------- */
+  .stkTools{display:flex; gap:9px; margin-bottom:14px}
   .stkTools button{
-    flex:1; padding:11px 8px; border-radius:var(--radius); border:1px solid var(--line);
+    flex:1; padding:13px 8px; border-radius:999px; border:1.5px solid var(--line);
     background:var(--card); color:var(--ink); font-size:13.5px; font-weight:700; cursor:pointer;
+    box-shadow:var(--shadow);
   }
-  .primaryBtn{background:var(--accent) !important; border-color:var(--accent) !important; color:#fff !important}
+  .primaryBtn{
+    background:linear-gradient(135deg,#12b77c,#0a7c56) !important; border-color:transparent !important;
+    color:#fff !important; box-shadow:0 6px 16px -6px rgba(10,124,86,.55) !important;
+  }
   .stk{
-    display:flex; align-items:center; gap:10px; background:var(--card);
+    display:flex; align-items:center; gap:12px; background:var(--card);
     border:1px solid var(--line); border-left:5px solid var(--line);
-    border-radius:var(--radius); padding:10px 12px; margin-bottom:8px;
+    border-radius:var(--radius); padding:12px 14px; margin-bottom:9px; box-shadow:var(--shadow);
   }
   .stk.ok{border-left-color:var(--accent)}
   .stk.bas{border-left-color:var(--promo)}
   .stk.vide{border-left-color:var(--danger)}
   .stkMain{flex:1; min-width:0}
   .stkName{font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
-  .stkBar{height:5px; border-radius:99px; background:var(--line); margin:6px 0 5px; overflow:hidden}
-  .stkBar span{display:block; height:100%; border-radius:99px; background:var(--accent)}
-  .stk.bas .stkBar span{background:var(--promo)}
-  .stk.vide .stkBar span{background:var(--danger)}
+  .stkBar{height:6px; border-radius:99px; background:#e8efe9; margin:7px 0 6px; overflow:hidden}
+  .stkBar span{display:block; height:100%; border-radius:99px; background:linear-gradient(90deg,#12b77c,#0a9d68); transition:width .3s ease}
+  .stk.bas .stkBar span{background:linear-gradient(90deg,#f59e0b,#d97706)}
+  .stk.vide .stkBar span{background:linear-gradient(90deg,#f87171,#dc2626)}
   .stkSub{font-size:12px; color:var(--muted)}
-  .linkBtn{background:none; border:none; color:var(--accent); font-size:12px; font-weight:700; cursor:pointer; padding:0 0 0 4px}
-  .posteForm label{display:block; font-size:12.5px; font-weight:600; color:var(--muted); margin:9px 0 0}
+  .stkSub b{font-variant-numeric:tabular-nums}
+  .linkBtn{background:none; border:none; color:var(--accent-deep); font-size:12px; font-weight:800; cursor:pointer; padding:0 0 0 5px}
+  .posteForm label{display:block; font-size:12.5px; font-weight:700; color:var(--muted); margin:10px 0 0}
   .posteForm input{
-    display:block; width:100%; margin-top:3px; font-size:16px; padding:9px 11px;
-    border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--ink);
+    display:block; width:100%; margin-top:4px; font-size:16px; font-family:inherit; padding:11px 13px;
+    border:1.5px solid var(--line); border-radius:var(--radius-s); background:var(--bg); color:var(--ink);
   }
+  .posteForm input:focus{border-color:var(--accent); outline:none}
   .exportTa{
     width:100%; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11px;
-    border:1px solid var(--line); border-radius:10px; padding:8px; background:var(--bg); color:var(--ink);
+    border:1.5px solid var(--line); border-radius:var(--radius-s); padding:10px; background:var(--bg); color:var(--ink);
   }
-  /* ---- Réassort ticket ---- */
-  .refillCard{background:#f0fbf4; border-color:#bfe6cc}
+  .refillCard{background:linear-gradient(135deg,#eafaf1,#ddf4e7); border-color:var(--accent-ring)}
 
-  /* ---- Suggestions ---- */
-  .sugCard{background:#f2f7ff; border-color:#c9dcf7}
-  .sugRow{display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px dashed #c9dcf7}
+  /* ---------------- Suggestions de Claude ---------------- */
+  .sugCard{background:var(--info-bg); border-color:var(--info-line)}
+  .sugRow{display:flex; align-items:center; gap:9px; padding:7px 0; border-bottom:1px dashed var(--info-line)}
   .sugRow:last-of-type{border-bottom:none}
   .sugTxt{flex:1; min-width:0; font-size:13.5px}
   .sugAdd,.sugNo{
-    width:30px; height:30px; flex:0 0 30px; border-radius:9px; border:1px solid var(--line);
+    width:32px; height:32px; flex:0 0 32px; border-radius:999px; border:1.5px solid var(--line);
     background:var(--card); font-size:16px; font-weight:700; cursor:pointer; line-height:1;
   }
-  .sugAdd{color:var(--accent); border-color:var(--accent)}
+  .sugAdd{color:var(--accent-deep); border-color:var(--accent-ring); background:var(--accent-soft)}
   .sugNo{color:var(--muted)}
 
-  /* ---- Scanner ---- */
-  .scanWrap{position:fixed; inset:0; z-index:60; background:#000; display:flex; flex-direction:column}
-  .scanHead{
-    display:flex; align-items:center; gap:10px; padding:calc(10px + env(safe-area-inset-top)) 14px 10px;
-    color:#fff; font-weight:700; font-size:15px; background:#111;
-  }
-  .scanHead button{margin-left:auto; background:none; border:none; color:#fff; font-size:22px; cursor:pointer}
-  #scanView{flex:1; min-height:0; overflow:hidden}
-  #scanView video{width:100%; height:100%; object-fit:cover}
-  .scanFoot{background:#111; color:#fff; padding:12px 14px calc(12px + env(safe-area-inset-bottom)); font-size:13px}
-  .scanFoot .manual{display:flex; gap:8px; margin-top:8px}
-  .scanFoot input{
-    flex:1; font-size:16px; padding:10px 12px; border-radius:10px; border:1px solid #333;
-    background:#1c1c1c; color:#fff;
-  }
-  .scanFoot .manual button{
-    padding:10px 14px; border-radius:10px; border:none; background:var(--accent);
-    color:#fff; font-weight:700; cursor:pointer;
-  }
-  .scanMsg{opacity:.85}
-  .scanMsg.err{color:#fca5a5}
-  .scanActions{display:flex; gap:8px; margin-top:8px}
-  .scanActions button{
-    flex:1; padding:9px 10px; border-radius:10px; border:1px solid #444;
-    background:#222; color:#fff; font-size:12.5px; font-weight:700; cursor:pointer;
-  }
-
-  /* ---- Promos ---- */
+  /* ---------------- Promos ---------------- */
   .promoCard{border-left:5px solid var(--line)}
   .promoCard.deal{border-left-color:var(--accent)}
-  .promoCard.trap{border-left-color:var(--danger); opacity:.9}
-  .promoCard.unknown{border-left-color:#c7cdd6}
-  .promoRow{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:2px 0 8px}
+  .promoCard.trap{border-left-color:var(--danger); opacity:.92}
+  .promoCard.unknown{border-left-color:#c3d1c8}
+  .promoRow{display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:2px 0 9px}
   .pStore{font-size:12.5px; font-weight:800}
-  .pPrice{margin-left:auto; font-size:15px}
+  .pPrice{margin-left:auto; font-size:15px; font-variant-numeric:tabular-nums}
   .pPrice b{font-size:17px}
-  .vLine{font-size:12.5px; font-weight:600; padding:6px 8px; border-radius:9px; margin-bottom:6px}
-  .vLine.good{background:var(--accent-soft); color:var(--accent)}
-  .vLine.bad{background:#fee2e2; color:var(--danger)}
-  .vLine.unk{background:#eef2f7; color:var(--muted)}
-  .vLine.warnLine{background:var(--promo-bg); color:var(--promo); font-weight:600}
-  .promoCard .bactions{margin-top:8px}
+  .vLine{font-size:12.5px; font-weight:700; padding:8px 10px; border-radius:10px; margin-bottom:7px}
+  .vLine.good{background:var(--accent-soft); color:var(--accent-deep)}
+  .vLine.bad{background:var(--danger-soft); color:var(--danger)}
+  .vLine.unk{background:#eef2ef; color:var(--muted)}
+  .vLine.warnLine{background:var(--promo-bg); color:var(--promo)}
+  .promoCard .bactions{margin-top:10px}
 
-  /* ---- Palier promo ---- */
-  .step{
-    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
-    background:var(--promo-bg); border:1px solid #f0d9a8; border-radius:10px;
-    padding:8px 10px; margin-top:8px; font-size:12.5px; color:#8a5a08;
+  /* ---------------- Scanner ---------------- */
+  .scanWrap{position:fixed; inset:0; z-index:60; background:#000; display:flex; flex-direction:column}
+  .scanHead{
+    display:flex; align-items:center; gap:10px; padding:calc(12px + env(safe-area-inset-top)) 16px 12px;
+    color:#fff; font-weight:800; font-size:15px; background:#0c1410;
   }
-  .step .stepTxt{flex:1; min-width:170px}
-  .item + .step{margin-top:-2px; margin-bottom:8px}
-  .stepBtn{
-    background:var(--promo); color:#fff; border:none; border-radius:8px;
-    padding:5px 11px; font-size:12px; font-weight:700; cursor:pointer;
+  .scanHead button{margin-left:auto; background:rgba(255,255,255,.12); border:none; color:#fff; font-size:18px; cursor:pointer; width:36px; height:36px; border-radius:999px}
+  #scanView{flex:1; min-height:0; overflow:hidden}
+  #scanView video{width:100%; height:100%; object-fit:cover}
+  .scanFoot{background:#0c1410; color:#fff; padding:14px 16px calc(14px + env(safe-area-inset-bottom)); font-size:13px}
+  .scanFoot .manual{display:flex; gap:8px; margin-top:10px}
+  .scanFoot input{
+    flex:1; font-size:16px; font-family:inherit; padding:11px 14px; border-radius:999px; border:1.5px solid #2b3a32;
+    background:#16211b; color:#fff;
+  }
+  .scanFoot .manual button{
+    padding:11px 18px; border-radius:999px; border:none; background:var(--accent);
+    color:#fff; font-weight:700; cursor:pointer;
+  }
+  .scanMsg{opacity:.9; font-weight:600}
+  .scanMsg.err{color:#fca5a5}
+  .scanActions{display:flex; gap:8px; margin-top:10px}
+  .scanActions button{
+    flex:1; padding:10px 10px; border-radius:999px; border:1px solid #2b3a32;
+    background:#16211b; color:#fff; font-size:12.5px; font-weight:700; cursor:pointer;
+  }
+  .stapleOpt{
+    border:1px solid #2b3a32; border-radius:var(--radius-s); background:#16211b; color:#fff;
+    padding:11px 13px; font-size:14px; font-weight:600; cursor:pointer; text-align:left;
   }
 
-  /* ---- Nav ---- */
+  /* ---------------- Navigation ---------------- */
   nav{
     position:fixed; bottom:0; left:0; right:0; z-index:30;
-    background:var(--card); border-top:1px solid var(--line);
+    background:rgba(255,255,255,.94); backdrop-filter:blur(12px);
+    border-top:1px solid var(--line);
+    box-shadow:0 -8px 24px -18px rgba(20,35,27,.35);
     display:flex; height:calc(var(--nav-h) + env(safe-area-inset-bottom));
-    padding-bottom:env(safe-area-inset-bottom);
+    padding:6px 4px calc(env(safe-area-inset-bottom) + 4px);
   }
   nav button{
-    flex:1; min-width:0; background:none; border:none; cursor:pointer; color:var(--muted);
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
-    font-size:10px; font-weight:600; padding:0 2px;
+    flex:1; min-width:0; background:none; border:none; cursor:pointer; color:#8fa096;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+    font-size:10px; font-weight:700; padding:0 2px; border-radius:14px; transition:color .15s;
   }
-  nav button .ico{font-size:19px}
-  nav button.on{color:var(--accent)}
+  nav button .ico{
+    font-size:19px; line-height:1; padding:4px 12px; border-radius:999px; transition:background .15s;
+  }
+  nav button.on{color:var(--accent-deep)}
+  nav button.on .ico{background:var(--accent-soft)}
   nav .cnt{
-    position:absolute; transform:translate(14px,-26px);
+    position:absolute; transform:translate(15px,-24px);
     background:var(--danger); color:#fff; font-size:10px; font-weight:800;
-    border-radius:999px; min-width:16px; height:16px; line-height:16px; padding:0 4px;
+    border-radius:999px; min-width:17px; height:17px; line-height:17px; padding:0 4px;
+    box-shadow:0 2px 6px rgba(220,38,38,.4);
   }
   .toast{
-    position:fixed; bottom:calc(var(--nav-h) + 18px); left:50%; transform:translateX(-50%);
-    background:var(--ink); color:#fff; padding:9px 16px; border-radius:999px; font-size:13.5px;
-    opacity:0; pointer-events:none; transition:opacity .25s; z-index:50; white-space:nowrap;
+    position:fixed; bottom:calc(var(--nav-h) + 22px); left:50%; transform:translateX(-50%) translateY(6px);
+    background:rgba(15,32,24,.92); color:#fff; padding:11px 20px; border-radius:999px; font-size:13.5px; font-weight:600;
+    opacity:0; pointer-events:none; transition:opacity .25s, transform .25s; z-index:50; white-space:nowrap;
+    backdrop-filter:blur(8px); box-shadow:var(--shadow-lift);
   }
-  .toast.show{opacity:1}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+
+  /* ---- icônes SVG ---- */
+  .ico svg{width:21px; height:21px; display:block}
+  nav button .ico{display:flex; align-items:center; justify-content:center}
+  .empty .big svg{width:52px; height:52px; color:#a9bcb0; margin:0 auto}
+  .stkTools button svg, .rcpt svg{width:17px; height:17px; vertical-align:-3px; margin-right:4px}
+  .rcpt{display:inline-flex; align-items:center; gap:6px}
+  .rank .medal{
+    font-size:14px; font-weight:800; width:30px; height:30px; border-radius:999px;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--accent-soft); color:var(--accent-deep);
+  }
+  .rank:first-of-type .medal{background:var(--accent); color:#fff}
 </style>
 </head>
 <body>
 
 <header>
   <div class="hrow">
-    <h1>🛒 Mes Courses</h1>
+    <h1>Mes Courses</h1>
     <div class="badges">
       <button class="badge sync off" id="syncBadge" title="Synchronisation entre appareils">Sync off</button>
       <span class="badge demo" id="demoBadge">Prix simulés</span>
@@ -380,12 +459,12 @@
 </main>
 
 <nav>
-  <button data-view="liste" class="on"><span class="ico">🛒</span>Liste<span class="cnt" id="navCnt" hidden></span></button>
-  <button data-view="stock"><span class="ico">🧊</span>Stock<span class="cnt" id="navStock" hidden></span></button>
-  <button data-view="catalogue"><span class="ico">📚</span>Catalogue</button>
-  <button data-view="promos"><span class="ico">🏷</span>Promos<span class="cnt" id="navPromo" hidden></span></button>
-  <button data-view="comparer"><span class="ico">⚖️</span>Comparer</button>
-  <button data-view="paniers"><span class="ico">🧺</span>Paniers</button>
+  <button data-view="liste" class="on"><span class="ico" data-i="cart"></span>Liste<span class="cnt" id="navCnt" hidden></span></button>
+  <button data-view="stock"><span class="ico" data-i="box"></span>Stock<span class="cnt" id="navStock" hidden></span></button>
+  <button data-view="catalogue"><span class="ico" data-i="book"></span>Catalogue</button>
+  <button data-view="promos"><span class="ico" data-i="tag"></span>Promos<span class="cnt" id="navPromo" hidden></span></button>
+  <button data-view="comparer"><span class="ico" data-i="scale"></span>Comparer</button>
+  <button data-view="paniers"><span class="ico" data-i="bag"></span>Paniers</button>
 </nav>
 
 <div class="toast" id="toast"></div>
@@ -613,9 +692,9 @@ async function syncNow(){
   setSyncBadge("busy","Sync…");
   try{
     const g=await syncApi("GET");
-    if(g.status===401){ setSyncBadge("err","Sync ⚠ mdp"); return; }
-    if(g.status===503){ setSyncBadge("err","Sync ⚠ config"); return; }
-    if(g.status!==200 || !g.json){ setSyncBadge("err","Sync ⚠ réseau"); return; }
+    if(g.status===401){ setSyncBadge("err","Sync ! mdp"); return; }
+    if(g.status===503){ setSyncBadge("err","Sync ! config"); return; }
+    if(g.status!==200 || !g.json){ setSyncBadge("err","Sync ! réseau"); return; }
     let version=g.json.version||0;
     const merged=mergeDocs(g.json.doc, localDoc(), syncBase());
     applyDoc(merged);
@@ -628,7 +707,7 @@ async function syncNow(){
         applyDoc(re);
         p=await syncApi("PUT",{baseVersion:p.json.current.version, doc:re});
       }
-      if(p.status!==200){ setSyncBadge("err","Sync ⚠"); return; }
+      if(p.status!==200){ setSyncBadge("err","Sync !"); return; }
       version=p.json.version;
     }
     setSyncBase(localDoc());
@@ -706,9 +785,23 @@ function dismissRefill(batch){
   saveStock(); render();
 }
 
+
+/* Icônes SVG inline (trait 1.8, currentColor) — remplacent les émojis. */
+const I = {
+  cart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1.6"/><circle cx="19" cy="21" r="1.6"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57L22.5 7H5.12"/></svg>',
+  box:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5"/><path d="M12 22V13"/></svg>',
+  book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+  tag:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><circle cx="7" cy="7" r="1.4"/></svg>',
+  scale:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M7 21h10"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/><path d="m5 7-3 7a3.2 3.2 0 0 0 6 0L5 7z"/><path d="m19 7-3 7a3.2 3.2 0 0 0 6 0l-3-7z"/></svg>',
+  bag:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>',
+  camera:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3.2"/></svg>',
+  receipt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><path d="M14 8H8"/><path d="M16 12H8"/></svg>',
+  search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7.5"/><path d="m21 21-4.3-4.3"/></svg>',
+};
 const $ = s => document.querySelector(s);
 const fmt = n => n.toLocaleString("fr-BE",{style:"currency",currency:"EUR"});
-const esc = s => String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const stripEmoji = s => String(s).replace(/[\u{1F000}-\u{1FBFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}]/gu,"").replace(/^\s+/,"");
+const esc = s => stripEmoji(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const catItem = id => DATA.catalog.find(c=>c.id===id) || null;
 
 /* ================== LOGIQUE PRIX & PROMOS ==================== */
@@ -795,7 +888,7 @@ function daysSince(iso){
 function frDate(iso){ const m=parseISO(iso); return m?`${m[3]}/${m[2]}/${m[1]}`:iso; }
 function freshnessTag(cat){
   const d=cat.releve;
-  if(!d) return `<div class="fresh sim">⚠️ Prix simulé — jamais relevé en magasin</div>`;
+  if(!d) return `<div class="fresh sim">Prix simulé — jamais relevé en magasin</div>`;
   const days=daysSince(d);
   const cls = days===null ? "" : days<=14 ? "ok" : days<=45 ? "mid" : "old";
   const age = days===null ? "" : days===0 ? " · aujourd'hui" : ` · il y a ${days} j`;
@@ -905,7 +998,7 @@ function stepBox(it){
     : `pour <b>${fmt(st.extra)}</b> de plus`;
   const move = st.from && st.from.id!==st.store.id ? ` (en passant de ${esc(st.from.name)} à ${esc(st.store.name)})` : "";
   return `<div class="step">
-    <span class="stepTxt">🏷 ${esc(st.label)} chez ${esc(st.store.name)} — passe à ${st.to} ${extraTxt}${move} :
+    <span class="stepTxt">${esc(st.label)} chez ${esc(st.store.name)} — passe à ${st.to} ${extraTxt}${move} :
       ${fmt(st.unitNext)}/u. au lieu de ${fmt(st.unitNow)}</span>
     <button class="stepBtn" data-step="${it.uid}" data-to="${st.to}">Passer à ${st.to}</button>
   </div>`;
@@ -1074,7 +1167,7 @@ function renderStock(){
   const missing=missingStock();
 
   let html=`<div class="stkTools">
-    <button class="primaryBtn" id="scanBtn">📷 Scanner un produit</button>
+    <button class="primaryBtn" id="scanBtn">${I.camera} Scanner un produit</button>
     <button id="newPoste">+ Nouveau poste</button>
   </div>`;
 
@@ -1083,20 +1176,20 @@ function renderStock(){
   /* Tickets lus par Claude, en attente d'application */
   for(const [batch,rows] of pendingRefills()){
     html+=`<div class="card refillCard">
-      <b>🧾 ${esc(batch)}</b>
+      <b class="rcpt">${I.receipt} ${esc(batch)}</b>
       <div class="small" style="margin:6px 0 8px">${rows.map(r=>{
         const p=stockItem(r.poste);
         return `+${r.delta} ${esc(r.unite||(p?p.unite:""))} ${esc(p?p.nom:r.nom)}${p?"":" <span class='muted'>(nouveau poste)</span>"}`;
       }).join(" · ")}</div>
       <div class="bactions">
-        <button class="primaryBtn" data-refill="${esc(batch)}">✓ Appliquer au stock</button>
+        <button class="primaryBtn" data-refill="${esc(batch)}">Appliquer au stock</button>
         <button data-norefill="${esc(batch)}">Ignorer</button>
       </div>
     </div>`;
   }
 
   if(items.length===0 && !stockEdit){
-    html+=`<div class="empty"><div class="big">🧊</div><b>Aucun poste de stock</b>
+    html+=`<div class="empty"><div class="big">${I.box}</div><b>Aucun poste de stock</b>
       <div class="small">Un « poste » = quelque chose que vous devez toujours avoir en réserve : 2 kg de pâtes, 6 rouleaux de papier toilette, 1 L d'huile d'olive.<br><br>
       Crée-les ici, ou dicte-les à Claude : il les écrira dans <code>data/stock.csv</code>, où ils seront versionnés et lisibles hors de l'app.</div></div>`;
     body.innerHTML=html;
@@ -1106,12 +1199,12 @@ function renderStock(){
 
   if(missing.length){
     html+=`<div class="card warn">
-      <b>🔻 ${missing.length} poste(s) sous le seuil</b>
+      <b>${missing.length} poste(s) sous le seuil</b>
       <div class="small">${missing.map(p=>`${esc(p.nom)} <span class="muted">(${p.qty}/${p.seuil} ${esc(p.unite||"")})</span>`).join(" · ")}</div>
       <div class="bactions"><button id="addMissing">+ Ajouter les manquants à la liste</button></div>
     </div>`;
   }else if(items.length){
-    html+=`<div class="card small" style="background:var(--accent-soft); border-color:#bfe6cc; color:var(--accent); font-weight:600">✅ Tous les postes sont au-dessus du seuil</div>`;
+    html+=`<div class="card small" style="background:var(--accent-soft); border-color:#bfe6cc; color:var(--accent); font-weight:600">Tous les postes sont au-dessus du seuil</div>`;
   }
 
   const byCat=new Map();
@@ -1125,7 +1218,7 @@ function renderStock(){
     html+=arr.sort((a,b)=>a.nom.localeCompare(b.nom,"fr")).map(stockRow).join("");
   }
   html+=`<div class="card"><div class="bactions">
-    <button id="exportStock">⇪ Exporter l'inventaire</button>
+    <button id="exportStock">Exporter l'inventaire</button>
   </div><div class="small muted" style="margin-top:6px">L'export produit le CSV complet (postes, seuils, quantités) à transmettre à Claude ou à coller dans <code>data/stock.csv</code> — c'est ce qui lui permet de savoir ce qu'il te reste.</div></div>`;
   html+=`<div id="exportBox"></div>`;
   body.innerHTML=html;
@@ -1145,7 +1238,7 @@ function posteForm(){
     <b>${isNew?"Nouveau poste de stock":"Modifier « "+esc(p.nom)+" »"}</b>
     ${editable?`
       <label>Nom <input id="pfNom" type="text" placeholder="ex : Pâtes sèches" value="${esc(p.nom)}"></label>
-      <label>Catégorie <input id="pfCat" type="text" placeholder="ex : 🥫 Épicerie" value="${esc(p.categorie)}"></label>
+      <label>Catégorie <input id="pfCat" type="text" placeholder="ex : Épicerie" value="${esc(p.categorie)}"></label>
       <label>Unité <input id="pfUnite" type="text" placeholder="kg, L, pièce, paquet" value="${esc(p.unite)}"></label>`
     :`<div class="small muted" style="margin-top:6px">Ce poste vient de <code>data/stock.csv</code> — son nom se change dans le repo (demande à Claude). Ici, seul le seuil est modifiable.</div>`}
     <label>Seuil — quantité à toujours avoir
@@ -1248,7 +1341,7 @@ function showStockExport(){
     <b>Inventaire au format CSV</b>
     <div class="small muted" style="margin:4px 0 8px">Les 7 premières colonnes correspondent à <code>data/stock.csv</code> ; <code>quantite</code> est l'état du moment, à transmettre à Claude.</div>
     <textarea class="exportTa" readonly rows="8">${esc(csv)}</textarea>
-    <div class="bactions"><button id="copyStock">📋 Copier</button><button id="closeExport">Fermer</button></div>
+    <div class="bactions"><button id="copyStock">Copier</button><button id="closeExport">Fermer</button></div>
   </div>`;
   box.querySelector("#copyStock").onclick=()=>{
     (navigator.clipboard?navigator.clipboard.writeText(csv):Promise.reject())
@@ -1289,7 +1382,7 @@ function openScanner(){
   const wrap=document.createElement("div");
   wrap.className="scanWrap";
   wrap.innerHTML=`
-    <div class="scanHead">📷 Scanner un produit <button id="scanClose" aria-label="Fermer">✕</button></div>
+    <div class="scanHead">Scanner un produit <button id="scanClose" aria-label="Fermer">✕</button></div>
     <div id="scanView"></div>
     <div class="scanFoot">
       <div class="scanMsg" id="scanMsg">Démarrage de la caméra…</div>
@@ -1391,7 +1484,7 @@ async function handleBarcode(code){
       lastAction={posteId:p.id, code, prevQty:p.qty, created:false};
       setStockQty(p.id, p.qty+stepFor(p));
       beep(false);
-      scanFeedback(`✅ ${p.nom} → ${stockItem(p.id).qty} ${p.unite||""}`);
+      scanFeedback(`✓ ${p.nom} → ${stockItem(p.id).qty} ${p.unite||""}`);
       return;
     }
     delete stock.ean[code];          // le poste a disparu, on oublie le lien
@@ -1399,7 +1492,7 @@ async function handleBarcode(code){
 
   /* 2) Code inconnu : identité OFF puis création automatique du poste. */
   scanBusy=true;
-  scanFeedback("🔎 Nouveau produit, identification…", {quiet:true});
+  scanFeedback("Nouveau produit, identification…", {quiet:true});
   try{
     const info=await lookupBarcode(code);
     const label=info && info.nom
@@ -1415,7 +1508,7 @@ async function handleBarcode(code){
     setStockQty(id, p.qty+1);
     saveStock();
     beep(true);
-    scanFeedback(`🆕 ${label} → ${stockItem(id).qty}`, {correctable:true});
+    scanFeedback(`Nouveau : ${label} → ${stockItem(id).qty}`, {correctable:true});
   }finally{
     lastScanAt[code]=Date.now();     // le lookup a pu durer : on repart de la fin
     scanBusy=false;
@@ -1491,7 +1584,7 @@ function askRelink(action){
     setStockQty(target.id, target.qty+stepFor(target));
     saveStock();
     lastAction={posteId:target.id, code:action.code, prevQty:target.qty, created:false};
-    scanFeedback(`✅ ${target.nom} → ${stockItem(target.id).qty} ${target.unite||""} · code mémorisé`);
+    scanFeedback(`✓ ${target.nom} → ${stockItem(target.id).qty} ${target.unite||""} · code mémorisé`);
   });
   foot.querySelector("[data-cancel]").onclick=()=>scanFeedback("OK. Vise le produit suivant.", {quiet:true});
 }
@@ -1504,16 +1597,16 @@ function promoCard(d){
   const vs = d.q>1 ? `${esc(d.other && d.other.store.name)} à ${d.q}` : esc(d.other && d.other.store.name);
   let verdictLine;
   if(d.verdict==="deal")
-    verdictLine=`<div class="vLine good">✅ ${Math.round(d.gain*100)} % moins cher que ${vs} (${fmt(d.other.cost)})</div>`;
+    verdictLine=`<div class="vLine good">${Math.round(d.gain*100)} % moins cher que ${vs} (${fmt(d.other.cost)})</div>`;
   else if(d.verdict==="trap")
-    verdictLine=`<div class="vLine bad">❌ ${vs} reste moins cher sans promo : ${fmt(d.other.cost)}</div>`;
+    verdictLine=`<div class="vLine bad">${vs} reste moins cher sans promo : ${fmt(d.other.cost)}</div>`;
   else
-    verdictLine=`<div class="vLine unk">🔍 seul prix connu — à confirmer en relevant les autres enseignes</div>`;
+    verdictLine=`<div class="vLine unk">Seul prix connu — à confirmer en relevant les autres enseignes</div>`;
   const qLine = d.q>1
-    ? `<div class="vLine unk">ℹ️ Remise effective à partir de ${d.q} unités — à l'unité, tu paies le plein tarif (${fmt(d.base)})</div>`
+    ? `<div class="vLine unk">Remise effective à partir de ${d.q} unités — à l'unité, tu paies le plein tarif (${fmt(d.base)})</div>`
     : "";
   const famLine = d.betterFam
-    ? `<div class="vLine warnLine">💡 Meilleur rapport dans « ${esc(famLabel(d.cat.famille))} » : <b>${esc(d.betterFam.cat.name)}</b> chez ${esc(d.betterFam.store.name)} à ${fmt(d.betterFam.up)}/${UNIT_LABEL[d.betterFam.u]}</div>`
+    ? `<div class="vLine warnLine">Meilleur rapport dans « ${esc(famLabel(d.cat.famille))} » : <b>${esc(d.betterFam.cat.name)}</b> chez ${esc(d.betterFam.store.name)} à ${fmt(d.betterFam.up)}/${UNIT_LABEL[d.betterFam.u]}</div>`
     : "";
   return `<div class="card promoCard ${d.verdict}">
     <div class="cmpHead">
@@ -1522,7 +1615,7 @@ function promoCard(d){
     </div>
     ${freshnessTag(d.cat)}
     <div class="promoRow">
-      <span class="promoTag">🏷 ${promoLabel(d.entry.promo)}</span>
+      <span class="promoTag">${promoLabel(d.entry.promo)}</span>
       <span class="pStore" style="color:${d.store.color}">${esc(d.store.name)}</span>
       <span class="pPrice"><span class="strike">${fmt(d.base*d.q)}</span> <b>${fmt(d.net)}</b>${forQ}<span class="muted small">${upTxt}</span></span>
     </div>
@@ -1538,16 +1631,16 @@ function renderPromos(){
   const body=$("#promoBody");
   const all=promoDeals();
   if(all.length===0){
-    body.innerHTML=`<div class="empty"><div class="big">🏷</div><b>Aucune promo dans le catalogue</b><div class="small">Les promos apparaissent ici dès qu'une colonne <code>promo_*</code> est remplie dans <code>data/prix.csv</code>.</div></div>`;
+    body.innerHTML=`<div class="empty"><div class="big">${I.tag}</div><b>Aucune promo dans le catalogue</b><div class="small">Les promos apparaissent ici dès qu'une colonne <code>promo_*</code> est remplie dans <code>data/prix.csv</code>.</div></div>`;
     return;
   }
   const deals=all.filter(d=>d.verdict==="deal");
   const traps=all.filter(d=>d.verdict==="trap");
   const unk=all.filter(d=>d.verdict==="unknown");
   let html=`<div class="card small muted">${all.length} promo(s) au catalogue — <b>${deals.length}</b> réellement avantageuse(s), <b>${traps.length}</b> en trompe-l'œil${unk.length?`, ${unk.length} à confirmer`:""}. Une remise n'est une bonne affaire que si elle bat le prix normal des concurrents.</div>`;
-  if(deals.length){ html+=`<div class="catTitle">✅ Vraies bonnes affaires</div>`+deals.map(promoCard).join(""); }
-  if(unk.length){ html+=`<div class="catTitle">🔍 À confirmer</div>`+unk.map(promoCard).join(""); }
-  if(traps.length){ html+=`<div class="catTitle">❌ Trompe-l'œil</div>`+traps.map(promoCard).join(""); }
+  if(deals.length){ html+=`<div class="catTitle">Vraies bonnes affaires</div>`+deals.map(promoCard).join(""); }
+  if(unk.length){ html+=`<div class="catTitle">À confirmer</div>`+unk.map(promoCard).join(""); }
+  if(traps.length){ html+=`<div class="catTitle">Trompe-l'œil</div>`+traps.map(promoCard).join(""); }
   body.innerHTML=html;
   body.querySelectorAll("[data-addpromo]").forEach(b=>b.onclick=()=>addItem(b.dataset.addpromo,null));
 }
@@ -1596,11 +1689,11 @@ function renderCatalogue(){
     : `${all.length} produits · ${new Set(all.map(c=>c.cat||"📝 Autres")).size} rayons — touche un rayon pour l'ouvrir`;
 
   if(all.length===0){
-    body.innerHTML=`<div class="empty"><div class="big">📭</div><b>Catalogue vide</b><div class="small">Aucun prix relevé pour l'instant. Les produits apparaîtront ici au fur et à mesure des relevés en magasin, ajoutés dans <code>data/prix.csv</code>.</div></div>`;
+    body.innerHTML=`<div class="empty"><div class="big">${I.book}</div><b>Catalogue vide</b><div class="small">Aucun prix relevé pour l'instant. Les produits apparaîtront ici au fur et à mesure des relevés en magasin, ajoutés dans <code>data/prix.csv</code>.</div></div>`;
     return;
   }
   if(hits.length===0){
-    body.innerHTML=`<div class="empty"><div class="big">🔍</div><b>Aucun produit trouvé</b><div class="small">Essaie un autre mot, ou ajoute-le comme article libre depuis l'onglet Liste.</div></div>`;
+    body.innerHTML=`<div class="empty"><div class="big">${I.search}</div><b>Aucun produit trouvé</b><div class="small">Essaie un autre mot, ou ajoute-le comme article libre depuis l'onglet Liste.</div></div>`;
     return;
   }
   const byRay=groupCatalog(hits);
@@ -1661,7 +1754,7 @@ function renderList(){
     const picks=popularPicks(8);
     body.innerHTML = sug + `
       <div class="empty">
-        <div class="big">🧾</div>
+        <div class="big">${I.cart}</div>
         <div><b>Ta liste est vide</b></div>
         <div class="small">${picks.length
           ? "Ajoute des articles ci-dessus, ou pars d'une suggestion :"
@@ -1733,7 +1826,7 @@ function suggestionsHtml(){
   const list=activeSuggestions();
   if(!list.length) return "";
   return `<div class="card sugCard">
-    <b>💡 ${list.length} suggestion(s) de Claude</b>
+    <b>${list.length} suggestion(s) de Claude</b>
     ${list.map(s=>`<div class="sugRow">
       <span class="sugTxt"><b>${esc(s.nom)}</b>${s.raison?` <span class="muted small">— ${esc(s.raison)}</span>`:""}</span>
       <button class="sugAdd" data-sugadd="${esc(s.id)}">+</button>
@@ -1832,7 +1925,7 @@ input.addEventListener("input", ()=>{
       <b>${best?fmt(best.cost):"—"}</b>
     </button>`;
   }).join("") + (hits.length>shown
-    ? `<button data-cat="1"><span class="muted small">+ ${hits.length-shown} autre(s) — voir dans le catalogue</span><b>📚</b></button>` : "");
+    ? `<button data-cat="1"><span class="muted small">+ ${hits.length-shown} autre(s) — voir dans le catalogue</span><b>›</b></button>` : "");
   sug.hidden=false;
   sug.querySelectorAll("button").forEach(b=>b.onclick=()=>{
     if(b.dataset.cat){
@@ -1863,20 +1956,20 @@ function renderCompare(){
   const {full, partial, free}=bucketItems(items);
   const priced=[...full, ...partial];
   if(items.length===0){
-    body.innerHTML=`<div class="empty"><div class="big">⚖️</div><b>Rien à comparer</b><div class="small">Ajoute d'abord des articles à ta liste.</div></div>`;
+    body.innerHTML=`<div class="empty"><div class="big">${I.scale}</div><b>Rien à comparer</b><div class="small">Ajoute d'abord des articles à ta liste.</div></div>`;
     return;
   }
   const totals=storeTotals(full);
   let html="";
   if(full.length===0){
-    html+=`<div class="card warn"><b>⚠️ Comparaison impossible</b><div class="small">Aucun article de ta liste n'a ses prix relevés dans les trois enseignes. Les prix connus sont affichés ci-dessous, mais aucun total par enseigne ne serait honnête.</div></div>`;
+    html+=`<div class="card warn"><b>Comparaison impossible</b><div class="small">Aucun article de ta liste n'a ses prix relevés dans les trois enseignes. Les prix connus sont affichés ci-dessous, mais aucun total par enseigne ne serait honnête.</div></div>`;
   }else{
     html+=`<div class="totalsGrid">`;
     const min=Math.min(...DATA.stores.map(s=>totals[s.id].adj));
     for(const s of DATA.stores){
       const t=totals[s.id];
       html+=`<div class="tstore" style="background:${s.color}${t.adj<=min+0.001?"":"cc"}">
-        <div class="tname">${esc(s.name)}${t.adj<=min+0.001?" 🏆":""}</div>
+        <div class="tname">${esc(s.name)}${t.adj<=min+0.001?" ✓":""}</div>
         <div class="tval">${fmt(t.adj)}</div>
         ${t.missing.length?`<div class="tmiss">${t.missing.length} indispo.*</div>`:""}
       </div>`;
@@ -1885,7 +1978,7 @@ function renderCompare(){
     html+=`</div><div class="small muted" style="margin:0 4px 10px">Total si tu achetais dans une seule enseigne, calculé sur les <b>${full.length} article(s) comparable(s)</b> — ceux dont le prix est connu (ou l'absence confirmée) dans les trois enseignes.${anyMissing?" * Articles indisponibles comptés au meilleur prix ailleurs.":""}</div>`;
   }
   if(partial.length){
-    html+=`<div class="card warn"><b>🔍 ${partial.length} article(s) hors comparaison</b>
+    html+=`<div class="card warn"><b>${partial.length} article(s) hors comparaison</b>
       <div class="small">Il manque des relevés : ${esc(partial.map(p=>p.name).join(", "))}. Ils sont exclus des totaux ci-dessus pour ne pas fausser le classement, mais leurs prix connus restent affichés.</div></div>`;
   }
 
@@ -1910,7 +2003,7 @@ function renderCompare(){
           <div class="sname">${esc(s.name)}</div>
           <div class="pval">${hasPromo?`<span class="strike">${fmt(e.p*it.qty)}</span>`:""}${fmt(c)}</div>
           <div class="punit">${unitPriceLabel(it.cat, c, it.qty)}</div>
-          ${hasPromo?`<span class="promoTag">🏷 ${promoLabel(e.promo)}</span>`:""}
+          ${hasPromo?`<span class="promoTag">${promoLabel(e.promo)}</span>`:""}
         </div>`;
       }
     }
@@ -1924,7 +2017,7 @@ function renderCompare(){
         const detail = a.up
           ? `${esc(a.c.unit)} · <b>${fmt(a.up.v)}/${UNIT_LABEL[a.up.u]}</b> chez ${esc(a.best.store.name)} <span class="altSave">−${Math.round(a.gain*100)}%</span> <span class="muted">(tu es à ${fmt(a.curUP.v)}/${UNIT_LABEL[a.curUP.u]})</span>`
           : `${fmt(a.best.cost)} chez ${esc(a.best.store.name)} <span class="altSave">−${fmt(a.save)}</span>`;
-        return `<div class="alt">💡<span class="altTxt"><b>${esc(a.c.name)}</b> — ${detail}${p?` <span class="promoTag">🏷 ${promoLabel(p)}</span>`:""}</span><button class="altBtn" data-swap="${it.uid}" data-to="${a.c.id}">Remplacer</button></div>`;
+        return `<div class="alt"><span class="altTxt"><b>${esc(a.c.name)}</b> — ${detail}${p?` <span class="promoTag">${promoLabel(p)}</span>`:""}</span><button class="altBtn" data-swap="${it.uid}" data-to="${a.c.id}">Remplacer</button></div>`;
       }).join("")+`</div>`;
     }
     html+=`</div>`;
@@ -1942,7 +2035,7 @@ function renderBaskets(){
   const body=$("#basketBody");
   const items=enrichedItems();
   if(items.filter(i=>i.cat).length===0){
-    body.innerHTML=`<div class="empty"><div class="big">🧺</div><b>Aucun panier à préparer</b><div class="small">Ajoute des articles comparables à ta liste.</div></div>`;
+    body.innerHTML=`<div class="empty"><div class="big">${I.bag}</div><b>Aucun panier à préparer</b><div class="small">Ajoute des articles comparables à ta liste.</div></div>`;
     return;
   }
   const {full}=bucketItems(items);
@@ -1954,8 +2047,8 @@ function renderBaskets(){
   const saving=totals[bestSingle.id].adj-splitFull.total;
 
   let html=`<div class="toggle">
-    <button class="${basketMode==="split"?"on":""}" data-mode="split">✂️ Répartition optimale</button>
-    <button class="${basketMode==="single"?"on":""}" data-mode="single">🏬 Magasin unique</button>
+    <button class="${basketMode==="split"?"on":""}" data-mode="split">Répartition optimale</button>
+    <button class="${basketMode==="single"?"on":""}" data-mode="single">Magasin unique</button>
   </div>`;
 
   if(basketMode==="split"){
@@ -1974,8 +2067,8 @@ function renderBaskets(){
         <div class="bhead"><span class="bname" style="color:${s.color}">${esc(s.name)}</span><span class="btotal">${fmt(sub)}</span></div>
         ${arr.map(it=>`<div class="bline"><span class="n">${esc(it.name)} <span class="muted">× ${it.qty}</span>${isComparable(it.cat)?"":` <span class="pTag" title="Prix non relevés dans les autres enseignes">🔍</span>`}</span><span>${fmt(it.cost)}</span></div>`).join("")}
         <div class="bactions">
-          <button data-copy="${s.id}">📋 Copier la liste</button>
-          <a href="${s.url}" target="_blank" rel="noopener">↗ Ouvrir ${esc(s.name)}</a>
+          <button data-copy="${s.id}">Copier la liste</button>
+          <a href="${s.url}" target="_blank" rel="noopener">Ouvrir ${esc(s.name)} ↗</a>
         </div>
       </div>`;
     }
@@ -1983,13 +2076,13 @@ function renderBaskets(){
       html+=`<div class="card small muted">Non répartis : ${split.unmatched.map(f=>esc(f.name)).join(", ")}</div>`;
     }
   }else if(full.length===0){
-    html+=`<div class="card warn"><b>⚠️ Classement impossible</b><div class="small">Aucun article de ta liste n'a ses prix relevés dans les trois enseignes — il n'y a rien à classer honnêtement. Passe en « Répartition optimale » pour voir les prix connus.</div></div>`;
+    html+=`<div class="card warn"><b>Classement impossible</b><div class="small">Aucun article de ta liste n'a ses prix relevés dans les trois enseignes — il n'y a rien à classer honnêtement. Passe en « Répartition optimale » pour voir les prix connus.</div></div>`;
   }else{
     html+=`<div class="small muted" style="margin:0 4px 10px">Classement si tu fais toutes tes courses dans une seule enseigne, sur les <b>${full.length} article(s) comparable(s)</b> :</div>`;
     ranked.forEach((s,i)=>{
       const t=totals[s.id];
       html+=`<div class="card rank">
-        <div class="medal">${["🥇","🥈","🥉"][i]||"•"}</div>
+        <div class="medal">${i+1}</div>
         <div class="rmain">
           <b style="color:${s.color}">${esc(s.name)}</b>
           ${t.missing.length?`<div class="small muted">Indisponible(s), compté(s) au meilleur prix ailleurs : ${t.missing.map(esc).join(", ")}</div>`:`<div class="small muted">Tous les articles disponibles</div>`}
@@ -1997,7 +2090,7 @@ function renderBaskets(){
         <div class="rtotal">${fmt(t.adj)}</div>
       </div>`;
     });
-    html+=`<div class="card small muted">💡 Sur ces mêmes articles, la répartition optimale descend à <b>${fmt(splitFull.total)}</b>.</div>`;
+    html+=`<div class="card small muted">Sur ces mêmes articles, la répartition optimale descend à <b>${fmt(splitFull.total)}</b>.</div>`;
   }
   body.innerHTML=html;
   body.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{ basketMode=b.dataset.mode; renderBaskets(); });
@@ -2022,6 +2115,7 @@ function toast(msg){
   const t=$("#toast"); t.textContent=msg; t.classList.add("show");
   clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),1800);
 }
+document.querySelectorAll("nav .ico[data-i]").forEach(s=>{ s.innerHTML = I[s.dataset.i] || ""; });
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>switchView(b.dataset.view));
 $("#catSearch").addEventListener("input", e=>{ catQuery=e.target.value; renderCatalogue(); });
 $("#syncBadge").onclick=syncSetup;
