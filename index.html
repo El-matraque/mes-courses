@@ -257,6 +257,11 @@
   }
   .scanMsg{opacity:.85}
   .scanMsg.err{color:#fca5a5}
+  .scanActions{display:flex; gap:8px; margin-top:8px}
+  .scanActions button{
+    flex:1; padding:9px 10px; border-radius:10px; border:1px solid #444;
+    background:#222; color:#fff; font-size:12.5px; font-weight:700; cursor:pointer;
+  }
 
   /* ---- Promos ---- */
   .promoCard{border-left:5px solid var(--line)}
@@ -1028,14 +1033,7 @@ function openScanner(){
     </div>`;
   document.body.appendChild(wrap);
   wrap.querySelector("#scanClose").onclick=closeScanner;
-  wrap.querySelector("#scanGo").onclick=()=>{
-    const v=(wrap.querySelector("#scanManual").value||"").replace(/\D/g,"");
-    if(v.length<8){ scanMsg("Un code-barres fait au moins 8 chiffres.", true); return; }
-    handleBarcode(v);
-  };
-  wrap.querySelector("#scanManual").addEventListener("keydown", e=>{
-    if(e.key==="Enter") wrap.querySelector("#scanGo").click();
-  });
+  scanFeedback("Démarrage de la caméra…", {quiet:true});
 
   loadH5Q().then(()=>{
     scanner=new Html5Qrcode("scanView", { formatsToSupport: [
@@ -1047,7 +1045,7 @@ function openScanner(){
       code=>handleBarcode(code),
       ()=>{});
   }).then(()=>{
-    scanMsg("Vise le code-barres du produit.");
+    scanFeedback("Vise les codes-barres — chaque produit compte tout seul, pas besoin de toucher l'écran.", {quiet:true});
   }).catch(err=>{
     const m=String(err && err.message || err);
     scanMsg(/chargement/.test(m)
@@ -1082,83 +1080,153 @@ async function lookupBarcode(code){
   }catch(e){ clearTimeout(to); return null; }
 }
 
-async function handleBarcode(code){
-  if(scanBusy) return;
-  scanBusy=true;
+/* ---- Scan en continu, zéro clic ----------------------------------
+   Objectif : enchaîner les paquets dans la cuisine sans jamais toucher
+   l'écran. Chaque code détecté agit immédiatement :
+     connu   → +1 sur son poste (bip aigu)
+     inconnu → identité Open Food Facts, poste créé automatiquement,
+               code rattaché, +1 (double bip)
+   Les corrections (Annuler / Rattacher) sont des boutons OPTIONNELS dans
+   le bandeau du bas — la caméra ne s'arrête jamais pour poser une question.
+
+   Piège à connaître : le décodeur émet le même code ~10×/seconde tant que
+   le paquet est devant la caméra. Un temps mort de 2,5 s par code évite
+   les +10 accidentels ; re-viser le même paquet APRÈS le temps mort fait
+   bien +1 — c'est comme ça qu'on compte trois paquets identiques. */
+const SCAN_COOLDOWN_MS=2500;
+const lastScanAt={};                 // code → timestamp de dernier traitement
+let lastAction=null;                 // pour Annuler : {posteId, code, prevQty, created}
+
+function beep(double){
   try{
-    /* 1) Code déjà rattaché à un poste : incrément immédiat, rien à demander. */
-    const known=stock.ean[code];
-    if(known){
-      const p=stockItem(known);
-      if(p){
-        setStockQty(p.id, p.qty+stepFor(p));
-        scanMsg(`✅ ${p.nom} → ${stockItem(p.id).qty} ${p.unite||""}`);
-        setTimeout(()=>{ scanBusy=false; }, 1200);
-        return;
-      }
-      delete stock.ean[code];            // le poste a disparu, on oublie le lien
+    const ctx=beep.ctx||(beep.ctx=new (window.AudioContext||window.webkitAudioContext)());
+    const note=(t,f)=>{ const o=ctx.createOscillator(), g=ctx.createGain();
+      o.frequency.value=f; o.connect(g); g.connect(ctx.destination);
+      g.gain.setValueAtTime(.15,t); g.gain.exponentialRampToValueAtTime(.001,t+.12);
+      o.start(t); o.stop(t+.13); };
+    note(ctx.currentTime, 880);
+    if(double) note(ctx.currentTime+.15, 660);
+  }catch(e){}
+  try{ navigator.vibrate && navigator.vibrate(double?[40,60,40]:40); }catch(e){}
+}
+
+async function handleBarcode(code){
+  const now=Date.now();
+  if(lastScanAt[code] && now-lastScanAt[code]<SCAN_COOLDOWN_MS) return; // même paquet encore devant la caméra
+  lastScanAt[code]=now;
+  if(scanBusy) return;               // un lookup OFF est déjà en cours
+
+  /* 1) Code connu : incrément immédiat, la caméra continue. */
+  const known=stock.ean[code];
+  if(known){
+    const p=stockItem(known);
+    if(p){
+      lastAction={posteId:p.id, code, prevQty:p.qty, created:false};
+      setStockQty(p.id, p.qty+stepFor(p));
+      beep(false);
+      scanFeedback(`✅ ${p.nom} → ${stockItem(p.id).qty} ${p.unite||""}`);
+      return;
     }
-    /* 2) Code inconnu : on demande son identité à Open Food Facts. */
-    scanMsg("Recherche du produit…");
+    delete stock.ean[code];          // le poste a disparu, on oublie le lien
+  }
+
+  /* 2) Code inconnu : identité OFF puis création automatique du poste. */
+  scanBusy=true;
+  scanFeedback("🔎 Nouveau produit, identification…", {quiet:true});
+  try{
     const info=await lookupBarcode(code);
     const label=info && info.nom
       ? info.nom + (info.quantite ? ` (${info.quantite})` : "")
       : `Code ${code}`;
-    scanMsg(info && info.nom ? `Trouvé : ${label}` : `Produit inconnu d'Open Food Facts (${code})`);
-    askStapleFor(code, label);
-  }finally{
-    if(!stock.ean[code]) scanBusy=false;
-  }
-}
-/* Rattacher un code-barres à un poste de stock (ou en créer un à la volée) */
-function askStapleFor(code, label){
-  const wrap=document.querySelector(".scanWrap"); if(!wrap) return;
-  const items=stockItems();
-  const foot=wrap.querySelector(".scanFoot");
-  foot.innerHTML=`
-    <div class="scanMsg" id="scanMsg">${esc(label)}</div>
-    <div class="small" style="margin:8px 0 6px; opacity:.8">À quel poste de stock ça correspond ?</div>
-    <div class="manual" style="flex-direction:column; gap:6px">
-      ${items.map(p=>`<button class="stapleOpt" data-st="${esc(p.id)}" style="width:100%">${esc(p.nom)} <span style="opacity:.7">(${p.qty} ${esc(p.unite||"")})</span></button>`).join("")}
-      <button class="stapleOpt" data-newst="1" style="width:100%; background:#333">+ Créer le poste « ${esc(label)} »</button>
-      <button class="stapleOpt" data-skip="1" style="width:100%; background:#333">Ignorer ce produit</button>
-    </div>`;
-  foot.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{
-    const p=stockItem(b.dataset.st);
-    stock.ean[code]=p.id;
-    setStockQty(p.id, p.qty+stepFor(p));
-    saveStock();
-    resetScanFoot(`✅ ${p.nom} → ${stockItem(p.id).qty} ${p.unite||""} · code mémorisé`);
-  });
-  foot.querySelector("[data-newst]").onclick=()=>{
-    const id=slugify(label)||("scan-"+code);
-    if(!stockItem(id))
+    let id=slugify(label)||("scan-"+code);
+    const existed=!!stockItem(id);
+    if(!existed)
       stock.custom.push({id, nom:label, categorie:"📦 Divers", unite:"pièce", seuil:1, famille:"", note:""});
     stock.ean[code]=id;
-    setStockQty(id, (stockItem(id)||{qty:0}).qty+1);
+    const p=stockItem(id);
+    lastAction={posteId:id, code, prevQty:p.qty, created:!existed};
+    setStockQty(id, p.qty+1);
     saveStock();
-    resetScanFoot(`✅ Poste « ${label} » créé (seuil 1, à ajuster)`);
-  };
-  foot.querySelector("[data-skip]").onclick=()=>resetScanFoot("Ignoré. Vise un autre produit.");
+    beep(true);
+    scanFeedback(`🆕 ${label} → ${stockItem(id).qty}`, {correctable:true});
+  }finally{
+    lastScanAt[code]=Date.now();     // le lookup a pu durer : on repart de la fin
+    scanBusy=false;
+  }
 }
-function resetScanFoot(msg){
+
+/* Bandeau du bas : dernier scan + corrections optionnelles + saisie manuelle.
+   Jamais bloquant — remplacé au scan suivant. */
+function scanFeedback(msg, opts){
   const wrap=document.querySelector(".scanWrap"); if(!wrap) return;
   const foot=wrap.querySelector(".scanFoot");
+  const o=opts||{};
   foot.innerHTML=`
     <div class="scanMsg" id="scanMsg">${esc(msg)}</div>
+    ${o.quiet?"":`<div class="scanActions">
+      ${lastAction?`<button id="scanUndo">↩︎ Annuler</button>`:""}
+      ${o.correctable?`<button id="scanRelink">Rattacher à un poste existant</button>`:""}
+    </div>`}
     <div class="manual">
       <input id="scanManual" type="text" inputmode="numeric" placeholder="ou tape le code-barres (13 chiffres)">
       <button id="scanGo">OK</button>
     </div>`;
-  foot.querySelector("#scanGo").onclick=()=>{
+  const on=(sel,fn)=>{ const el=foot.querySelector(sel); if(el) el.onclick=fn; };
+  on("#scanUndo", undoLastScan);
+  on("#scanRelink", ()=>askRelink(lastAction));
+  on("#scanGo", ()=>{
     const v=(foot.querySelector("#scanManual").value||"").replace(/\D/g,"");
     if(v.length<8){ scanMsg("Un code-barres fait au moins 8 chiffres.", true); return; }
+    delete lastScanAt[v];            // saisie volontaire : pas de temps mort
     handleBarcode(v);
-  };
-  foot.querySelector("#scanManual").addEventListener("keydown", e=>{
-    if(e.key==="Enter") foot.querySelector("#scanGo").click();
   });
-  scanBusy=false;
+  const inp=foot.querySelector("#scanManual");
+  if(inp) inp.addEventListener("keydown", e=>{ if(e.key==="Enter") on && foot.querySelector("#scanGo").click(); });
+}
+function undoLastScan(){
+  if(!lastAction) return;
+  const a=lastAction; lastAction=null;
+  if(a.created){
+    stock.custom=stock.custom.filter(p=>p.id!==a.posteId);
+    delete stock.qty[a.posteId]; delete stock.seuil[a.posteId];
+    delete stock.ean[a.code];
+    saveStock(); render();
+    scanFeedback(`↩︎ Poste supprimé. Vise le produit suivant.`, {quiet:true});
+  }else{
+    setStockQty(a.posteId, a.prevQty);
+    scanFeedback(`↩︎ Annulé. Vise le produit suivant.`, {quiet:true});
+  }
+}
+/* Le poste auto-créé n'était pas le bon ? On déplace la quantité et le
+   code-barres vers un poste existant — le seul moment où un choix s'affiche,
+   et uniquement parce qu'on l'a demandé. */
+function askRelink(action){
+  const wrap=document.querySelector(".scanWrap"); if(!wrap || !action) return;
+  const foot=wrap.querySelector(".scanFoot");
+  const others=stockItems().filter(p=>p.id!==action.posteId);
+  if(!others.length){ scanFeedback("Aucun autre poste. Continue à scanner.", {quiet:true}); return; }
+  foot.innerHTML=`
+    <div class="scanMsg" id="scanMsg">Rattacher ce code à quel poste ?</div>
+    <div class="manual" style="flex-direction:column; gap:6px">
+      ${others.map(p=>`<button class="stapleOpt" data-st="${esc(p.id)}" style="width:100%">${esc(p.nom)} <span style="opacity:.7">(${p.qty} ${esc(p.unite||"")})</span></button>`).join("")}
+      <button class="stapleOpt" data-cancel="1" style="width:100%; background:#333">Laisser tel quel</button>
+    </div>`;
+  foot.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{
+    const target=stockItem(b.dataset.st);
+    /* retire l'effet du scan sur le poste auto-créé */
+    if(action.created){
+      stock.custom=stock.custom.filter(p=>p.id!==action.posteId);
+      delete stock.qty[action.posteId]; delete stock.seuil[action.posteId];
+    }else{
+      stock.qty[action.posteId]=action.prevQty;
+    }
+    stock.ean[action.code]=target.id;
+    setStockQty(target.id, target.qty+stepFor(target));
+    saveStock();
+    lastAction={posteId:target.id, code:action.code, prevQty:target.qty, created:false};
+    scanFeedback(`✅ ${target.nom} → ${stockItem(target.id).qty} ${target.unite||""} · code mémorisé`);
+  });
+  foot.querySelector("[data-cancel]").onclick=()=>scanFeedback("OK. Vise le produit suivant.", {quiet:true});
 }
 
 /* ---- Promos ---- */
