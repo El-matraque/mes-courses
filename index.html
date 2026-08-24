@@ -329,51 +329,11 @@ const LOCAL_DATA = {
      comme une absence de produit, sinon les totaux par enseigne mentent.
      famille : produits similaires (alternatives). releve : date du relevé réel, null = simulé. */
   catalog: [
-    {"id": "bananes", "name": "Bananes", "unit": "1 kg", "cat": "🍎 Fruits & Légumes", "prices": {"delhaize": {"p": 1.99}, "carrefour": {"p": 1.89, "promo": {"t": "pct", "v": 20}}, "colruyt": {"p": 1.75}}, "famille": "bananes"},
-    {"id": "pommes", "name": "Pommes Jonagold", "unit": "2 kg", "cat": "🍎 Fruits & Légumes", "prices": {"delhaize": {"p": 4.49}, "carrefour": {"p": 4.29}, "colruyt": {"p": 3.99}}, "famille": "pommes"},
-    {"id": "tomates", "name": "Tomates grappe", "unit": "1 kg", "cat": "🍎 Fruits & Légumes", "prices": {"delhaize": {"p": 3.29}, "carrefour": {"p": 2.99}, "colruyt": {"p": 2.79}}, "famille": "tomates"},
-    {"id": "carottes", "name": "Carottes", "unit": "1 kg", "cat": "🍎 Fruits & Légumes", "prices": {"delhaize": {"p": 1.49}, "carrefour": {"p": 1.39}, "colruyt": {"p": 1.19}}, "famille": "carottes"},
-    {"id": "pdt", "name": "Pommes de terre", "unit": "2,5 kg", "cat": "🍎 Fruits & Légumes", "prices": {"delhaize": {"p": 3.99}, "carrefour": {"p": 3.79}, "colruyt": {"p": 3.49}}, "famille": "pdt"},
-    {"id": "oignons", "name": "Oignons", "unit": "1 kg", "cat": "🍎 Fruits & Légumes", "prices": {"delhaize": {"p": 1.59}, "carrefour": {"p": 1.49}, "colruyt": {"p": 1.29}}, "famille": "oignons"},
-    {"id": "salade", "name": "Salade iceberg", "unit": "pièce", "cat": "🍎 Fruits & Légumes", "prices": {"delhaize": {"p": 1.49}, "carrefour": {"p": 1.39}, "colruyt": {"p": 1.25}}, "famille": "salade"},
-    {"id": "poivrons", "name": "Poivrons trio", "unit": "3 pièces", "cat": "🍎 Fruits & Légumes", "prices": {"delhaize": {"p": 2.99, "promo": {"t": "pct", "v": 25}}, "carrefour": {"p": 2.79}, "colruyt": {"p": 2.59}}, "famille": "poivrons"},
-    {"id": "lait", "name": "Lait demi-écrémé", "unit": "1 L", "cat": "🥛 Crèmerie", "prices": {"delhaize": {"p": 1.09}, "carrefour": {"p": 1.05}, "colruyt": {"p": 0.95}}, "famille": "lait"},
-    {"id": "beurre", "name": "Beurre doux", "unit": "250 g", "cat": "🥛 Crèmerie", "prices": {"delhaize": {"p": 3.29}, "carrefour": {"p": 2.99}, "colruyt": {"p": 2.89}}, "famille": "beurre"},
-    {"id": "oeufs", "name": "Œufs M", "unit": "12 pièces", "cat": "🥛 Crèmerie", "prices": {"delhaize": {"p": 3.79, "promo": {"t": "pct", "v": 15}}, "carrefour": {"p": 3.49}, "colruyt": {"p": 3.29}}, "famille": "oeufs"},
-    {"id": "yaourt", "name": "Yaourt nature", "unit": "4 × 125 g", "cat": "🥛 Crèmerie", "prices": {"delhaize": {"p": 2.19}, "carrefour": {"p": 1.99, "promo": {"t": "1+1"}}, "colruyt": {"p": 1.85}}, "famille": "yaourt"},
-    {"id": "gouda", "name": "Gouda jeune tranches", "unit": "300 g", "cat": "🥛 Crèmerie", "prices": {"delhaize": {"p": 3.99}, "carrefour": {"p": 3.79}, "colruyt": {"p": 3.49}}, "famille": "gouda"},
-    {"id": "rape", "name": "Emmental râpé", "unit": "200 g", "cat": "🥛 Crèmerie", "prices": {"delhaize": {"p": 2.49}, "carrefour": {"p": 2.29}, "colruyt": {"p": 2.19}}, "famille": "rape"},
-    {"id": "poulet", "name": "Blanc de poulet", "unit": "500 g", "cat": "🥩 Viande & Poisson", "prices": {"delhaize": {"p": 6.49, "promo": {"t": "pct", "v": 25}}, "carrefour": {"p": 5.99}, "colruyt": {"p": 5.79}}, "famille": "poulet"},
-    {"id": "hache", "name": "Haché porc & veau", "unit": "500 g", "cat": "🥩 Viande & Poisson", "prices": {"delhaize": {"p": 4.99}, "carrefour": {"p": 4.79}, "colruyt": {"p": 4.49}}, "famille": "hache"},
-    {"id": "saumon", "name": "Pavés de saumon", "unit": "2 × 125 g", "cat": "🥩 Viande & Poisson", "prices": {"delhaize": {"p": 8.99}, "carrefour": {"p": 8.49}, "colruyt": {"p": 7.99, "promo": {"t": "pct", "v": 15}}}, "famille": "saumon"},
-    {"id": "jambon", "name": "Jambon cuit", "unit": "200 g", "cat": "🥩 Viande & Poisson", "prices": {"delhaize": {"p": 3.49}, "carrefour": {"p": 3.29}, "colruyt": {"p": 2.99}}, "famille": "jambon"},
-    {"id": "pain", "name": "Pain gris tranché", "unit": "800 g", "cat": "🍞 Boulangerie", "prices": {"delhaize": {"p": 2.59}, "carrefour": {"p": 2.39}, "colruyt": {"p": 2.19}}, "famille": "pain"},
-    {"id": "baguette", "name": "Baguette", "unit": "pièce", "cat": "🍞 Boulangerie", "prices": {"delhaize": {"p": 1.19}, "carrefour": {"p": 1.09}, "colruyt": {"p": 0.99}}, "famille": "baguette"},
-    {"id": "pistolets", "name": "Pistolets", "unit": "6 pièces", "cat": "🍞 Boulangerie", "prices": {"delhaize": {"p": 2.1}, "carrefour": {"na": true}, "colruyt": {"p": 1.89}}, "famille": "pistolets"},
-    {"id": "pates", "name": "Spaghetti", "unit": "500 g", "cat": "🥫 Épicerie", "prices": {"delhaize": {"p": 1.29}, "carrefour": {"p": 1.19, "promo": {"t": "2e-50"}}, "colruyt": {"p": 0.99}}, "famille": "pates"},
-    {"id": "riz", "name": "Riz basmati", "unit": "1 kg", "cat": "🥫 Épicerie", "prices": {"delhaize": {"p": 2.99}, "carrefour": {"p": 2.79}, "colruyt": {"p": 2.59}}, "famille": "riz"},
-    {"id": "sauce", "name": "Sauce tomate basilic", "unit": "420 g", "cat": "🥫 Épicerie", "prices": {"delhaize": {"p": 1.99}, "carrefour": {"p": 1.89}, "colruyt": {"p": 1.69}}, "famille": "sauce"},
-    {"id": "huile", "name": "Huile d'olive extra vierge", "unit": "750 ml", "cat": "🥫 Épicerie", "prices": {"delhaize": {"p": 7.99, "promo": {"t": "pct", "v": 20}}, "carrefour": {"p": 7.49}, "colruyt": {"p": 6.99}}, "famille": "huile"},
-    {"id": "cafe", "name": "Café moulu", "unit": "500 g", "cat": "🥫 Épicerie", "prices": {"delhaize": {"p": 6.49}, "carrefour": {"p": 5.99}, "colruyt": {"p": 5.69, "promo": {"t": "pct", "v": 20}}}, "famille": "cafe"},
-    {"id": "confiture", "name": "Confiture de fraises", "unit": "450 g", "cat": "🥫 Épicerie", "prices": {"delhaize": {"p": 2.79}, "carrefour": {"p": 2.59}, "colruyt": {"p": 2.39}}, "famille": "confiture"},
-    {"id": "muesli", "name": "Muesli croustillant", "unit": "750 g", "cat": "🥫 Épicerie", "prices": {"delhaize": {"p": 3.99}, "carrefour": {"p": 3.69}, "colruyt": {"p": 3.49}}, "famille": "muesli"},
-    {"id": "chocolat", "name": "Chocolat noir", "unit": "100 g", "cat": "🥫 Épicerie", "prices": {"delhaize": {"p": 2.49, "promo": {"t": "1+1"}}, "carrefour": {"p": 2.29}, "colruyt": {"p": 2.19}}, "famille": "chocolat"},
-    {"id": "frites", "name": "Frites surgelées", "unit": "1 kg", "cat": "🧊 Surgelés", "prices": {"delhaize": {"p": 2.89}, "carrefour": {"p": 2.69}, "colruyt": {"p": 2.49}}, "famille": "frites"},
-    {"id": "epinards", "name": "Épinards en branches", "unit": "450 g", "cat": "🧊 Surgelés", "prices": {"delhaize": {"p": 2.19}, "carrefour": {"p": 1.99}, "colruyt": {"p": 1.89}}, "famille": "epinards"},
-    {"id": "pizza", "name": "Pizza margherita", "unit": "pièce", "cat": "🧊 Surgelés", "prices": {"delhaize": {"p": 3.49}, "carrefour": {"p": 3.29, "promo": {"t": "pct", "v": 30}}, "colruyt": {"p": 2.99}}, "famille": "pizza"},
-    {"id": "eau", "name": "Eau pétillante", "unit": "6 × 1,5 L", "cat": "🥤 Boissons", "prices": {"delhaize": {"p": 3.99}, "carrefour": {"p": 3.79}, "colruyt": {"p": 3.49}}, "famille": "eau"},
-    {"id": "jus", "name": "Jus d'orange", "unit": "1 L", "cat": "🥤 Boissons", "prices": {"delhaize": {"p": 2.29}, "carrefour": {"p": 2.19}, "colruyt": {"p": 1.99}}, "famille": "jus"},
-    {"id": "biere", "name": "Bière blonde", "unit": "6 × 33 cl", "cat": "🥤 Boissons", "prices": {"delhaize": {"p": 5.99, "promo": {"t": "pct", "v": 20}}, "carrefour": {"p": 5.79}, "colruyt": {"p": 5.49}}, "famille": "biere"},
-    {"id": "pq", "name": "Papier toilette", "unit": "12 rouleaux", "cat": "🧴 Hygiène & Entretien", "prices": {"delhaize": {"p": 6.99}, "carrefour": {"p": 6.49, "promo": {"t": "pct", "v": 25}}, "colruyt": {"p": 5.99}}, "famille": "pq"},
-    {"id": "lavevaisselle", "name": "Tablettes lave-vaisselle", "unit": "30 pièces", "cat": "🧴 Hygiène & Entretien", "prices": {"delhaize": {"p": 8.99}, "carrefour": {"p": 8.49}, "colruyt": {"p": 7.99, "promo": {"t": "1+1"}}}, "famille": "lavevaisselle"},
-    {"id": "geldouche", "name": "Gel douche", "unit": "500 ml", "cat": "🧴 Hygiène & Entretien", "prices": {"delhaize": {"p": 3.29}, "carrefour": {"p": 2.99}, "colruyt": {"p": 2.79}}, "famille": "geldouche"},
-    {"id": "lessive", "name": "Lessive liquide", "unit": "1,5 L", "cat": "🧴 Hygiène & Entretien", "prices": {"delhaize": {"p": 8.49}, "carrefour": {"p": 7.99}, "colruyt": {"p": 7.49}}, "famille": "lessive"},
-    {"id": "dentifrice", "name": "Dentifrice", "unit": "2 × 75 ml", "cat": "🧴 Hygiène & Entretien", "prices": {"delhaize": {"p": 2.99}, "carrefour": {"p": 2.79}, "colruyt": {"p": 2.59}}, "famille": "dentifrice"},
-    {"id": "lait-eco", "famille": "lait", "name": "Lait demi-écrémé premier prix", "unit": "1 L", "cat": "🥛 Crèmerie", "prices": {"delhaize": {"p": 0.89}, "carrefour": {"p": 0.85}, "colruyt": {"p": 0.85}}},
-    {"id": "lait-bio", "famille": "lait", "name": "Lait demi-écrémé bio", "unit": "1 L", "cat": "🥛 Crèmerie", "prices": {"delhaize": {"p": 1.35}, "carrefour": {"p": 1.28}, "colruyt": {"p": 1.29}}},
-    {"id": "pates-eco", "famille": "pates", "name": "Spaghetti premier prix", "unit": "500 g", "cat": "🥫 Épicerie", "prices": {"delhaize": {"p": 0.75}, "carrefour": {"p": 0.69}, "colruyt": {"p": 0.65}}},
-    {"id": "cafe-eco", "famille": "cafe", "name": "Café moulu premier prix", "unit": "500 g", "cat": "🥫 Épicerie", "prices": {"delhaize": {"p": 4.29}, "carrefour": {"p": 3.99}, "colruyt": {"p": 3.89}}},
-    {"id": "pq-eco", "famille": "pq", "name": "Papier toilette premier prix", "unit": "12 rouleaux", "cat": "🧴 Hygiène & Entretien", "prices": {"delhaize": {"p": 4.99}, "carrefour": {"p": 4.79}, "colruyt": {"p": 4.59}}}
+    /* Volontairement VIDE : ce fallback contenait 45 produits génériques aux
+       prix inventés ("Bière blonde", "Yaourt nature"…). Ils ont été purgés —
+       un faux prix sous un faux nom est pire que pas de donnée du tout.
+       La source de vérité est data/prix.csv ; si ce fichier ne se charge pas,
+       l'app le dit franchement plutôt que d'afficher du simulé. */
   ]
 };
 
@@ -606,7 +566,13 @@ function setQty(uid, q){
 
 /* Articles de la liste enrichis (comparables vs libres) */
 function enrichedItems(){
-  return state.items.map(it=>({...it, cat: it.catalogId ? catItem(it.catalogId) : null}));
+  return state.items.map(it=>{
+    const cat = it.catalogId ? catItem(it.catalogId) : null;
+    /* orphan : l'article pointait vers une fiche qui n'existe plus (purge du
+       catalogue, id renommé). On le garde dans la liste — il reste utile en
+       rayon — mais on ne prétend plus pouvoir le comparer. */
+    return {...it, cat, orphan: !!it.catalogId && !cat};
+  });
 }
 /* Tri des articles de la liste en trois seaux */
 function bucketItems(items){
@@ -820,6 +786,10 @@ function renderCatalogue(){
     ? `${hits.length} résultat(s) pour « ${catQuery.trim()} » sur ${all.length} produits`
     : `${all.length} produits · ${new Set(all.map(c=>c.cat||"📝 Autres")).size} rayons — touche un rayon pour l'ouvrir`;
 
+  if(all.length===0){
+    body.innerHTML=`<div class="empty"><div class="big">📭</div><b>Catalogue vide</b><div class="small">Aucun prix relevé pour l'instant. Les produits apparaîtront ici au fur et à mesure des relevés en magasin, ajoutés dans <code>data/prix.csv</code>.</div></div>`;
+    return;
+  }
   if(hits.length===0){
     body.innerHTML=`<div class="empty"><div class="big">🔍</div><b>Aucun produit trouvé</b><div class="small">Essaie un autre mot, ou ajoute-le comme article libre depuis l'onglet Liste.</div></div>`;
     return;
@@ -864,18 +834,31 @@ function renderCatalogue(){
 }
 
 /* ---- Liste ---- */
-const POPULAR = ["lait","pain","oeufs","bananes","pates","cafe","beurre","pq"];
+/* Suggestions de départ : dérivées du catalogue réel, jamais codées en dur —
+   une liste figée d'ids renverrait des boutons vides après une purge. */
+function popularPicks(n){
+  const seen=new Set(), out=[], rest=[];
+  for(const c of DATA.catalog){
+    if(!bestStoreFor(c,1)) continue;
+    if(seen.has(c.famille)){ rest.push(c); continue; }   // une famille = une suggestion…
+    seen.add(c.famille); out.push(c);
+  }
+  return out.concat(rest).slice(0,n);                    // …puis on complète si le catalogue est étroit
+}
 function renderList(){
   const body=$("#listBody");
   if(state.items.length===0){
+    const picks=popularPicks(8);
     body.innerHTML = `
       <div class="empty">
         <div class="big">🧾</div>
         <div><b>Ta liste est vide</b></div>
-        <div class="small">Ajoute des articles ci-dessus, ou pars d'une suggestion :</div>
-        <div class="chips">${POPULAR.map(id=>{
-          const c=catItem(id); return c?`<button class="chip" data-add="${c.id}">${esc(c.name)}</button>`:"";
-        }).join("")}</div>
+        <div class="small">${picks.length
+          ? "Ajoute des articles ci-dessus, ou pars d'une suggestion :"
+          : "Ajoute des articles ci-dessus. Le catalogue de prix est vide — tout ce que tu ajoutes restera un article libre, sans comparaison."}</div>
+        <div class="chips">${picks.map(c=>
+          `<button class="chip" data-add="${esc(c.id)}">${esc(c.name)}${c.unit?` <span class="muted small">${esc(c.unit)}</span>`:""}</button>`
+        ).join("")}</div>
       </div>`;
     body.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>addItem(b.dataset.add,null));
     return;
@@ -892,7 +875,8 @@ function renderList(){
     for(const it of arr){
       const best = it.cat ? bestStoreFor(it.cat, it.qty) : null;
       let sub;
-      if(!it.cat)      sub = "article libre — non comparé";
+      if(it.orphan)    sub = "retiré du catalogue — plus de prix associé";
+      else if(!it.cat) sub = "article libre — non comparé";
       else if(!best)   sub = esc(it.cat.unit)+" · aucun prix connu";
       else{
         const partial = !isComparable(it.cat);
@@ -1227,6 +1211,7 @@ function parseCSV(text){
 function setBadges(srcTxt, real, total){
   $("#srcBadge").textContent = srcTxt;
   const d=$("#demoBadge");
+  if(total===0){ d.textContent="Aucun produit"; d.classList.remove("real"); return; }
   if(typeof real === "number" && total && real>0 && real<total){
     d.textContent = `${real}/${total} relevés`;      // catalogue mixte : ne pas mentir
     d.classList.add("real");
@@ -1264,8 +1249,8 @@ async function loadData(){
       }
     }
   }catch(e){}
-  // 3) Fallback local
-  setBadges("Données locales · simulé", false);
+  // 3) Plus aucune source : mieux vaut le dire que d'inventer des prix
+  setBadges("Aucune donnée de prix", false, DATA.catalog.length);
   render();
 }
 

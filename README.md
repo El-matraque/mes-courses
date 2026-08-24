@@ -30,11 +30,13 @@ Point clé : un `1+1` et un `2e-50` n'apportent **rien** à une seule unité. Il
 | Prix unitaires (€/kg, €/L) et alternatives à quantité égale | ✅ Réel |
 | Architecture front → `data/prix.csv` → `/api/prices` → provider de données | ✅ Réel |
 | Analyse des promos (bonnes affaires vs trompe-l'œil, paliers 1+1) | ✅ Réel |
-| **Une partie des prix** | ⚠️ **Mixte** : 28 réf. Barilla relevées en magasin, 45 encore simulées |
+| **Les prix** | ✅ **Tous relevés en magasin** — 28 réf. Barilla sur 3 enseignes |
 
-Le badge en haut de l'app affiche la part réellement relevée (« 28/73 relevés ») plutôt qu'un simple « Prix relevés » qui laisserait croire que tout est vérifié. Chaque fiche produit indique soit la date et l'âge de son relevé, soit « Prix simulé — jamais relevé en magasin ». Le badge « Source » indique d'où viennent les données (CSV, fonction Netlify, ou fallback local).
+**Zéro prix simulé dans ce dépôt.** Les 45 lignes génériques d'origine (« Bière blonde », « Yaourt nature », « Gel douche ») ont été supprimées : elles portaient des prix inventés sous des noms qu'on ne trouve dans aucun rayon, et elles faussaient toutes les comparaisons. Le fallback embarqué dans `index.html` a été vidé pour la même raison — si `data/prix.csv` ne se charge pas, l'app affiche « Aucune donnée de prix » au lieu d'inventer.
 
-⚠️ **Ne jamais mettre de `date_releve` sur une ligne inventée** : c'est ce qui faisait passer 45 prix simulés pour des relevés terrain.
+Le catalogue se reconstruit désormais uniquement par relevé réel, rayon par rayon. Le badge en haut de l'app affiche la part réellement relevée dès que le catalogue redevient mixte, et chaque fiche indique la date et l'âge de son relevé.
+
+⚠️ **Ne jamais mettre de `date_releve` sur une ligne inventée**, et ne jamais ajouter de ligne sans l'avoir relevée : c'est ce qui avait fait passer 45 prix fictifs pour des relevés terrain.
 
 ## Déployer sur Netlify
 
@@ -71,6 +73,18 @@ C'est la règle la plus importante du fichier — la confondre fait mentir le co
 | *(vide)* | **prix pas encore relevé** | l'article sort des totaux par enseigne et s'affiche « ? à relever » |
 
 Un prix inconnu n'est **pas** une absence de produit. Traiter les deux pareil rend le classement faux : un article relevé chez une seule enseigne ferait ressortir les trois magasins à égalité. L'app exclut donc des totaux tout article dont au moins un prix est vide, et l'annonce explicitement (« N article(s) hors comparaison »).
+
+### ⚠️ La colonne `nom` porte toujours la marque
+
+`nom` = **marque + produit + variante**, et `unite` = le format. Un nom générique ne sert à rien en rayon : on ne trouve pas « Bière blonde » dans un magasin.
+
+| ❌ | ✅ |
+|---|---|
+| `Bière blonde` | `Jupiler Blonde` |
+| `Yaourt nature` | `Danone Activia nature` |
+| `Fromage de chèvre` | `Boni fromage de chèvre doux` |
+
+Si deux formats du même produit coexistent, ils partagent le même `nom` et se distinguent par `unite` (`Barilla Spaghetti n°5` en 500 g et en 1 kg) — l'app affiche toujours l'unité à côté du nom.
 
 Autres colonnes : promo = `-20%`, `1+1` ou `2e-50` ; `date_releve` vide = prix simulé (le badge de l'app s'adapte automatiquement, et chaque fiche affiche l'âge du relevé) ; `unite` est normalisée automatiquement (`150 g`, `4 × 125 g`, `6 × 1,5 L`, `12 pièces`…) pour calculer un **prix au kg / L / pièce** — c'est lui qui sert à comparer, pas le prix du paquet ; `famille` regroupe les produits similaires — l'app propose alors des alternatives au moins 5 % moins chères **à quantité égale**, avec un bouton « Remplacer ».
 
