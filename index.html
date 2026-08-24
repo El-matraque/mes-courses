@@ -1098,6 +1098,16 @@ function setQty(uid, q){
 }
 
 /* Articles de la liste enrichis (comparables vs libres) */
+function relinkFreeItems(){
+  if(!DATA.catalog.length) return;
+  let changed=false;
+  for(const it of state.items){
+    if(it.catalogId) continue;
+    const hit = nameCatalogMatch(it.name);
+    if(hit){ it.catalogId = hit.id; changed = true; }
+  }
+  if(changed) saveState();
+}
 function enrichedItems(){
   return state.items.map(it=>{
     const cat = it.catalogId ? catItem(it.catalogId) : null;
@@ -1242,15 +1252,15 @@ function render(){
 
 /* Rapproche un favori du catalogue de prix : par nom (inclusion dans un
    sens ou l'autre), par recouvrement de mots, sinon par famille. */
-function favCatalogMatch(f){
-  const n = norm(f.nom);
+function nameCatalogMatch(nom){
+  const n = norm(nom);
   let hit = DATA.catalog.find(c => {
     const cn = norm(c.name);
     return cn && (n.includes(cn) || cn.includes(n));
   });
   if(!hit){
     const toks = s => new Set(norm(s).split(/[^a-z0-9%]+/).filter(t=>t.length>2 || /\d/.test(t)));
-    const ft = toks(f.nom);
+    const ft = toks(nom);
     let bestScore = 0.69;
     for(const c of DATA.catalog){
       const ct = toks(c.name);
@@ -1261,6 +1271,10 @@ function favCatalogMatch(f){
       if(score > bestScore){ bestScore = score; hit = c; }
     }
   }
+  return hit || null;
+}
+function favCatalogMatch(f){
+  let hit = nameCatalogMatch(f.nom);
   if(!hit && f.famille){
     const cands = DATA.catalog.filter(c => c.famille===f.famille && bestStoreFor(c,1));
     cands.sort((a,b)=>{
@@ -2345,6 +2359,7 @@ async function loadData(){
         DATA={stores:LOCAL_DATA.stores, catalog:d.catalog};
         setBadges(d.lastDate?"CSV · dernier relevé "+frDate(d.lastDate):"CSV · simulé",
                   d.nReleve, d.catalog.length);
+        relinkFreeItems();
         render(); return;
       }
     }
@@ -2360,6 +2375,7 @@ async function loadData(){
       if(d && Array.isArray(d.catalog) && Array.isArray(d.stores)){
         DATA=d;
         setBadges("API"+(d.simulated?" · simulé":""), !d.simulated);
+        relinkFreeItems();
         render(); return;
       }
     }
