@@ -91,14 +91,24 @@ Autres colonnes : promo = `-20%`, `1+1` ou `2e-50` ; `date_releve` vide = prix s
 
 Le CSV peut être rempli par : (a) une session Claude in Chrome qui relève les prix réels sur les 3 sites (gratuit, semi-manuel), (b) Enzo à la main dans Excel, (c) plus tard, un job automatisé (GitHub Action + API Apify) qui régénère le fichier.
 
+## Synchro entre appareils
+
+Sans synchro, la liste et le stock vivent dans le navigateur de **chaque** appareil : l'iPhone et le PC ont chacun leur copie, qui divergent. La synchro les fait converger vers un document unique côté serveur (`/api/sync`, fonction Netlify + Netlify Blobs), protégé par un **mot de passe partagé du foyer**.
+
+Activation : définir la variable d'environnement `SYNC_PASSWORD` dans Netlify (Site configuration → Environment variables) puis redéployer ; ensuite, sur chaque appareil, taper ce mot de passe via le badge « Sync » en haut de l'app. Sans mot de passe enregistré, l'app reste 100 % locale comme avant.
+
+Le cœur est une **fusion à trois états** (serveur / local / dernier état synchronisé) : un élément modifié localement depuis la dernière synchro gagne, un élément intact prend la version serveur. Résultat : « elle ajoute du pain sur son téléphone pendant que je coche le lait sur le mien » conserve les deux, y compris quand les deux poussent en même temps (conflit 409 → refusion → nouvel essai). Le serveur ne fusionne jamais — il n'a pas l'état « base » qu'il faudrait pour le faire correctement.
+
+Synchro déclenchée : au chargement, au retour sur l'onglet, et 3 s après chaque modification. Hors-ligne, l'app fonctionne normalement en local et rattrape au retour du réseau.
+
 ## Inventaire : un modèle délibérément coupé en deux
 
-L'app est un site statique sans backend. Elle ne peut donc rien écrire dans le repo, et Claude ne peut rien lire dans le navigateur. L'inventaire est découpé selon cette frontière :
+L'app est un site statique dont le backend se limite à `/api/sync`. Claude ne peut toujours rien lire dans le navigateur ni dans les Blobs. L'inventaire est découpé selon cette frontière :
 
 | Moitié | Où | Change | Qui y a accès |
 |---|---|---|---|
 | **Les seuils** — ce qu'on doit toujours avoir | `data/stock.csv` | rarement | l'app **et** Claude |
-| **Les quantités du moment** + les codes-barres déjà rattachés | `localStorage` | tous les jours | l'app seule |
+| **Les quantités du moment** + les codes-barres déjà rattachés | `localStorage`, synchronisé entre appareils via `/api/sync` | tous les jours | l'app seule |
 
 Un « poste de stock » n'est pas un produit précis mais une **réserve** : *2 kg de pâtes*, *12 rouleaux de papier toilette*, *1 L d'huile d'olive*. La colonne `famille` peut le relier à une famille du catalogue prix — l'app ajoute alors automatiquement le produit **le moins cher au kilo** de cette famille plutôt qu'un article libre.
 

@@ -1,0 +1,8 @@
+{
+  "name": "mes-courses",
+  "private": true,
+  "description": "Comparateur de courses Delhaize/Carrefour/Colruyt — le site reste zéro-build, ce package.json ne sert qu'à Netlify pour installer les dépendances des fonctions.",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}

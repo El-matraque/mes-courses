@@ -127,6 +127,11 @@
   .strike{text-decoration:line-through; color:var(--muted); font-weight:500; font-size:11px; margin-right:3px}
   .pTag{font-size:11px; opacity:.7}
   .badge.demo.real{background:var(--accent-soft); color:var(--accent)}
+  .badge.sync{border:none; cursor:pointer; font-family:inherit}
+  .badge.sync.off{background:#eef2f7; color:var(--muted)}
+  .badge.sync.ok{background:var(--accent-soft); color:var(--accent)}
+  .badge.sync.err{background:#fee2e2; color:var(--danger)}
+  .badge.sync.busy{background:var(--promo-bg); color:var(--promo)}
 
   /* ---- Alternatives ---- */
   .altBox{margin-top:8px; border-top:1px dashed var(--line); padding-top:8px; display:flex; flex-direction:column; gap:6px}
@@ -328,6 +333,7 @@
   <div class="hrow">
     <h1>🛒 Mes Courses</h1>
     <div class="badges">
+      <button class="badge sync off" id="syncBadge" title="Synchronisation entre appareils">Sync off</button>
       <span class="badge demo" id="demoBadge">Prix simulés</span>
       <span class="badge src" id="srcBadge">…</span>
     </div>
@@ -423,7 +429,10 @@ let view = "liste";
 let basketMode = "split"; // 'split' | 'single'
 
 const LS_KEY = "mes-courses-v1";
-function saveState(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){} }
+function saveState(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){}
+  if(typeof scheduleSync==="function") scheduleSync();
+}
 function loadState(){
   try{
     const raw = localStorage.getItem(LS_KEY);
@@ -449,7 +458,10 @@ let SUGGEST = [];                     // propositions venant de data/suggestions
 let REFILL = [];                      // réassorts venant de data/refill.csv (tickets lus par Claude)
 const SK_KEY = "mes-courses-stock-v1";
 let stock = { qty:{}, seuil:{}, custom:[], ean:{}, dismissed:[], refillsDone:[] };
-function saveStock(){ try{ localStorage.setItem(SK_KEY, JSON.stringify(stock)); }catch(e){} }
+function saveStock(){
+  try{ localStorage.setItem(SK_KEY, JSON.stringify(stock)); }catch(e){}
+  if(typeof scheduleSync==="function") scheduleSync();
+}
 function loadStock(){
   try{
     const raw = localStorage.getItem(SK_KEY);
@@ -485,6 +497,170 @@ function setStockQty(id, q){
 }
 function slugify(s){
   return norm(s).replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,40);
+}
+
+/* ==================== SYNCHRO ENTRE APPAREILS ====================
+   La liste et le stock vivaient dans le navigateur de CHAQUE appareil :
+   l'iPhone et le PC avaient chacun leur copie. La synchro les fait
+   converger vers un document unique stocké côté serveur (/api/sync,
+   Netlify Blobs), protégé par un mot de passe partagé du foyer.
+
+   Principe : fusion à TROIS états. On garde une copie du dernier état
+   synchronisé (la "base"). À chaque synchro : pour chaque élément,
+   si la valeur locale n'a pas bougé depuis la base, la version serveur
+   gagne (l'autre appareil a agi) ; si elle a bougé, le local gagne
+   (c'est nous qui avons agi). Ainsi "elle ajoute du pain sur son
+   téléphone pendant que je coche le lait sur le mien" conserve les deux.
+
+   Sans mot de passe enregistré, l'app reste 100 % locale, comme avant. */
+const SY_PW_KEY="mes-courses-sync-pw", SY_BASE_KEY="mes-courses-sync-base";
+let syncTimer=null, syncBusy=false, syncApplying=false, syncState="off"; // off | ok | err | busy
+
+function syncPw(){ try{ return localStorage.getItem(SY_PW_KEY)||""; }catch(e){ return ""; } }
+function syncEnabled(){ return !!syncPw(); }
+function localDoc(){
+  return { items: state.items,
+           stock: { qty:stock.qty, seuil:stock.seuil, custom:stock.custom,
+                    ean:stock.ean, dismissed:stock.dismissed, refillsDone:stock.refillsDone } };
+}
+function applyDoc(d){
+  if(!d) return;
+  /* syncApplying empêche la sauvegarde déclenchée ICI de programmer une
+     nouvelle synchro : sans ce verrou, chaque passe en planifierait une
+     autre 3 s plus tard, indéfiniment. */
+  syncApplying=true;
+  try{
+    if(Array.isArray(d.items)) state.items=d.items;
+    if(d.stock && typeof d.stock==="object"){
+      stock={ qty:d.stock.qty||{}, seuil:d.stock.seuil||{}, custom:d.stock.custom||[],
+              ean:d.stock.ean||{}, dismissed:d.stock.dismissed||[], refillsDone:d.stock.refillsDone||[] };
+    }
+    saveState(); saveStock();
+  }finally{ syncApplying=false; }
+}
+function syncBase(){
+  try{ const r=localStorage.getItem(SY_BASE_KEY); return r?JSON.parse(r):null; }catch(e){ return null; }
+}
+function setSyncBase(doc){ try{ localStorage.setItem(SY_BASE_KEY, JSON.stringify(doc)); }catch(e){} }
+const eq=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+
+/* Fusion par clé : local modifié depuis la base → local gagne, sinon serveur.
+   undefined = absent (création/suppression traitées par la même règle). */
+function mergeKey(srv, loc, bas){
+  return eq(loc,bas) ? srv : loc;
+}
+function mergeById(srvArr, locArr, basArr, keyOf){
+  const S=new Map((srvArr||[]).map(x=>[keyOf(x),x]));
+  const L=new Map((locArr||[]).map(x=>[keyOf(x),x]));
+  const B=new Map((basArr||[]).map(x=>[keyOf(x),x]));
+  const ids=[...new Set([...S.keys(),...L.keys(),...B.keys()])];
+  const out=[];
+  for(const id of ids){
+    const m=mergeKey(S.get(id), L.get(id), B.get(id));
+    if(m!==undefined) out.push(m);
+  }
+  return out;
+}
+function mergeMap(srv, loc, bas){
+  const out={};
+  const keys=[...new Set([...Object.keys(srv||{}),...Object.keys(loc||{}),...Object.keys(bas||{})])];
+  for(const k of keys){
+    const m=mergeKey((srv||{})[k],(loc||{})[k],(bas||{})[k]);
+    if(m!==undefined) out[k]=m;
+  }
+  return out;
+}
+function mergeDocs(srv, loc, bas){
+  srv=srv||{items:[],stock:{}}; loc=loc||{items:[],stock:{}}; bas=bas||{items:[],stock:{}};
+  const ss=srv.stock||{}, ls=loc.stock||{}, bs=bas.stock||{};
+  return {
+    items: mergeById(srv.items, loc.items, bas.items, x=>String(x.uid)),
+    stock: {
+      qty:   mergeMap(ss.qty, ls.qty, bs.qty),
+      seuil: mergeMap(ss.seuil, ls.seuil, bs.seuil),
+      ean:   mergeMap(ss.ean, ls.ean, bs.ean),
+      custom: mergeById(ss.custom, ls.custom, bs.custom, x=>x.id),
+      /* listes à sens unique (on n'y fait qu'ajouter) : union */
+      dismissed:  [...new Set([...(ss.dismissed||[]),...(ls.dismissed||[])])],
+      refillsDone:[...new Set([...(ss.refillsDone||[]),...(ls.refillsDone||[])])],
+    }
+  };
+}
+
+function setSyncBadge(st, label){
+  syncState=st;
+  const b=$("#syncBadge"); if(!b) return;
+  b.className="badge sync "+st;
+  b.textContent=label;
+}
+async function syncApi(method, body){
+  const ctl=new AbortController();
+  const to=setTimeout(()=>ctl.abort(), 10000);
+  try{
+    const r=await fetch("/api/sync",{ method, signal:ctl.signal,
+      headers:{ "x-sync-password":syncPw(), ...(body?{"content-type":"application/json"}:{}) },
+      body: body?JSON.stringify(body):undefined });
+    clearTimeout(to);
+    return { status:r.status, json: await r.json().catch(()=>null) };
+  }catch(e){ clearTimeout(to); return { status:0, json:null }; }
+}
+/* Une passe complète : pull → fusion → apply → push si besoin.
+   Réentrance bloquée ; les modifications pendant la passe repartiront
+   au prochain scheduleSync. */
+async function syncNow(){
+  if(!syncEnabled() || syncBusy) return;
+  syncBusy=true;
+  setSyncBadge("busy","Sync…");
+  try{
+    const g=await syncApi("GET");
+    if(g.status===401){ setSyncBadge("err","Sync ⚠ mdp"); return; }
+    if(g.status===503){ setSyncBadge("err","Sync ⚠ config"); return; }
+    if(g.status!==200 || !g.json){ setSyncBadge("err","Sync ⚠ réseau"); return; }
+    let version=g.json.version||0;
+    const merged=mergeDocs(g.json.doc, localDoc(), syncBase());
+    applyDoc(merged);
+    if(!eq(merged, g.json.doc)){
+      let p=await syncApi("PUT",{baseVersion:version, doc:merged});
+      if(p.status===409 && p.json && p.json.current){
+        /* l'autre appareil a poussé pendant notre passe : on refusionne
+           sur son état et on retente UNE fois */
+        const re=mergeDocs(p.json.current.doc, localDoc(), syncBase());
+        applyDoc(re);
+        p=await syncApi("PUT",{baseVersion:p.json.current.version, doc:re});
+      }
+      if(p.status!==200){ setSyncBadge("err","Sync ⚠"); return; }
+      version=p.json.version;
+    }
+    setSyncBase(localDoc());
+    const t=new Date();
+    setSyncBadge("ok",`Sync ✓ ${String(t.getHours()).padStart(2,"0")}:${String(t.getMinutes()).padStart(2,"0")}`);
+    render();
+  }finally{
+    syncBusy=false;
+  }
+}
+function scheduleSync(){
+  if(!syncEnabled() || syncApplying) return;
+  clearTimeout(syncTimer);
+  syncTimer=setTimeout(syncNow, 3000);   // laisse finir une rafale de modifications
+}
+function syncSetup(){
+  const cur=syncPw();
+  const pw=window.prompt(cur
+    ? "Mot de passe de synchro (laisser vide pour désactiver la synchro sur cet appareil) :"
+    : "Mot de passe de synchro du foyer (le même sur chaque appareil) :", cur);
+  if(pw===null) return;                 // annulé
+  try{
+    if(pw.trim()===""){
+      localStorage.removeItem(SY_PW_KEY); localStorage.removeItem(SY_BASE_KEY);
+      setSyncBadge("off","Sync off");
+      toast("Synchro désactivée sur cet appareil");
+    }else{
+      localStorage.setItem(SY_PW_KEY, pw.trim());
+      toast("Connexion…");
+      syncNow();
+    }
+  }catch(e){ toast("Stockage local indisponible"); }
 }
 
 /* ---- Réassort depuis un ticket de caisse ----------------------------
@@ -1848,6 +2024,8 @@ function toast(msg){
 }
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>switchView(b.dataset.view));
 $("#catSearch").addEventListener("input", e=>{ catQuery=e.target.value; renderCatalogue(); });
+$("#syncBadge").onclick=syncSetup;
+document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) syncNow(); });
 
 /* ---- Source de données ----------------------------------------
    Priorité : 1) data/prix.csv (source de vérité, éditable dans Excel)
@@ -1993,6 +2171,8 @@ loadStock();
 render();
 loadData();
 Promise.all([loadStockCsv(), loadSuggestions(), loadRefill()]).then(render);
+if(syncEnabled()){ setSyncBadge("busy","Sync…"); syncNow(); }
+else setSyncBadge("off","Sync off");
 </script>
 </body>
 </html>
