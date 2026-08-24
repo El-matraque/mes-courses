@@ -2,16 +2,14 @@
 
 App web mobile-first (français) pour gérer sa liste de courses, comparer les prix et promos entre enseignes belges, et préparer ses paniers par magasin. Zéro build, zéro dépendance : un `index.html` + une fonction Netlify.
 
-## Les quatre onglets
+## Deux onglets, pas plus
+
+L'app du quotidien tient sur un écran ; l'outillage d'analyse est replié derrière.
 
 | Onglet | Rôle |
 |---|---|
-| 🛒 **Liste** | La liste de courses : ajout par recherche, quantités, cases à cocher, et bandeau de coût en magasin (dans le caddie / restant / total estimé) |
-| ⭐ **Favoris** | La base des produits du foyer : ce qu'on aime et rachète, enrichie par scan de code-barres et tickets de caisse, pour remplir la liste en un tap |
-| 📚 **Catalogue** | Parcourir les produits par rayon puis par famille, triés du meilleur au moins bon rapport qualité-prix, ajout en un tap. Conçu pour rester utilisable à plusieurs centaines de références |
-| 🏷 **Promos** | Toutes les promos du catalogue, triées par gain réel, en séparant les vraies bonnes affaires des trompe-l'œil |
-| ⚖️ **Comparer** | Prix des 3 enseignes article par article, promos, prix au kg/L, alternatives moins chères, et totaux par enseigne |
-| 🧺 **Paniers** | Répartition optimale entre magasins, ou classement si tu fais tout au même endroit |
+| **Courses** | L'écran unique du foyer : la liste (grosses coches, bandeau de coût « dans le caddie / restant / total »), et en dessous la grille **Vos produits** façon Bring — une tuile par favori, tap = sur la liste, re-tap = retirée. Les tickets lus par Claude et ses suggestions apparaissent ici. « Gérer » ouvre la page Favoris (scan, édition, export). |
+| **Prix** | Les quatre outils d'analyse en sous-onglets : Promos (bonnes affaires vs trompe-l'œil), Comparer (3 enseignes, prix au kg), Paniers (répartition optimale), Catalogue (tous les produits relevés). |
 
 ### Comment une promo est jugée
 

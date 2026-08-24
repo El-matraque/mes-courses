@@ -417,6 +417,41 @@
   .ltVal{font-size:17px; font-weight:800; margin-top:2px; font-variant-numeric:tabular-nums}
   .lt.done .ltVal{color:var(--accent-deep)}
   .ltSub{font-size:10.5px; color:var(--muted); margin-top:1px}
+
+  /* ---- grille de favoris (écran Courses) ---- */
+  .favHead{display:flex; align-items:center; gap:10px; margin:24px 6px 10px}
+  .favTitle{flex:1; font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:.08em}
+  .iconBtn{
+    width:34px; height:34px; border-radius:999px; border:1.5px solid var(--line);
+    background:var(--card); color:var(--accent-deep); cursor:pointer;
+    display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow);
+  }
+  .iconBtn svg{width:17px; height:17px}
+  .favGrid{display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-bottom:8px}
+  .tile{
+    background:var(--card); border:1.5px solid var(--line); border-radius:16px;
+    padding:13px 8px 11px; cursor:pointer; box-shadow:var(--shadow);
+    display:flex; flex-direction:column; align-items:center; gap:8px; min-height:98px;
+    transition:background .15s, border-color .15s;
+  }
+  .tile .tIni{
+    width:40px; height:40px; border-radius:999px; background:var(--accent-soft);
+    color:var(--accent-deep); font-weight:800; font-size:17px;
+    display:flex; align-items:center; justify-content:center; transition:background .15s;
+  }
+  .tile .tName{
+    font-size:11.5px; font-weight:600; line-height:1.25; text-align:center; color:var(--ink);
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  }
+  .tile.in{background:var(--accent); border-color:var(--accent-deep)}
+  .tile.in .tIni{background:rgba(255,255,255,.22); color:#fff}
+  .tile.in .tName{color:#fff}
+  .backLink{
+    background:none; border:none; color:var(--accent-deep); font-size:14px; font-weight:700;
+    cursor:pointer; padding:0 0 12px 2px; font-family:inherit; display:block;
+  }
+  .prixBar{margin-bottom:14px}
+  .prixBar button{font-size:12.5px; padding:9px 4px}
 </style>
 </head>
 <body>
@@ -454,6 +489,13 @@
     <div id="catBody"></div>
   </section>
 
+  <div class="toggle prixBar" id="prixBar" hidden>
+    <button data-sub="promos">Promos</button>
+    <button data-sub="comparer">Comparer</button>
+    <button data-sub="paniers">Paniers</button>
+    <button data-sub="catalogue">Catalogue</button>
+  </div>
+
   <section id="view-stock" hidden>
     <div id="stockBody"></div>
   </section>
@@ -472,12 +514,8 @@
 </main>
 
 <nav>
-  <button data-view="liste" class="on"><span class="ico" data-i="cart"></span>Liste<span class="cnt" id="navCnt" hidden></span></button>
-  <button data-view="stock"><span class="ico" data-i="star"></span>Favoris<span class="cnt" id="navStock" hidden></span></button>
-  <button data-view="catalogue"><span class="ico" data-i="book"></span>Catalogue</button>
-  <button data-view="promos"><span class="ico" data-i="tag"></span>Promos<span class="cnt" id="navPromo" hidden></span></button>
-  <button data-view="comparer"><span class="ico" data-i="scale"></span>Comparer</button>
-  <button data-view="paniers"><span class="ico" data-i="bag"></span>Paniers</button>
+  <button data-view="liste" class="on"><span class="ico" data-i="cart"></span>Courses<span class="cnt" id="navCnt" hidden></span></button>
+  <button data-view="prix"><span class="ico" data-i="tag"></span>Prix<span class="cnt" id="navPromo" hidden></span></button>
 </nav>
 
 <div class="toast" id="toast"></div>
@@ -1118,9 +1156,22 @@ function swapItem(uid, toId){
 }
 
 /* ============================ VUES ============================ */
+/* Deux onglets seulement : Courses (liste + favoris + gestion) et Prix
+   (l'outillage d'analyse — promos, comparateur, paniers, catalogue — en
+   sous-onglets). L'app du quotidien tient sur un écran ; le reste est là
+   pour Enzo et Claude. */
+const PRIX_SUBS=["promos","comparer","paniers","catalogue"];
+let prixSub="promos";
 function switchView(v){
+  if(v==="prix") v=prixSub;
+  if(PRIX_SUBS.includes(v)) prixSub=v;
   view=v;
-  for(const b of document.querySelectorAll("nav button")) b.classList.toggle("on", b.dataset.view===v);
+  const isPrix=PRIX_SUBS.includes(v);
+  for(const b of document.querySelectorAll("nav button"))
+    b.classList.toggle("on", b.dataset.view==="prix" ? isPrix : (v==="liste"||v==="stock"));
+  const bar=$("#prixBar");
+  bar.hidden=!isPrix;
+  bar.querySelectorAll("button").forEach(b=>b.classList.toggle("on", b.dataset.sub===prixSub));
   $("#view-liste").hidden = v!=="liste";
   $("#view-stock").hidden = v!=="stock";
   $("#view-catalogue").hidden = v!=="catalogue";
@@ -1138,13 +1189,85 @@ function render(){
   const deals=promoDeals().filter(d=>d.verdict==="deal").length;
   const pb=$("#navPromo");
   pb.hidden = deals===0; pb.textContent=deals;
-  $("#navStock").hidden = true;   // plus d'alerte de seuil : les Favoris n'ont pas de quantités
   if(view==="liste") renderList();
   if(view==="stock") renderStock();
   if(view==="catalogue") renderCatalogue();
   if(view==="promos") renderPromos();
   if(view==="comparer") renderCompare();
   if(view==="paniers") renderBaskets();
+}
+
+/* ---- Écran Courses : grille de favoris façon Bring ------------------
+   Le geste unique du quotidien : une tuile par produit du foyer,
+   tap = sur la liste (tuile verte, ✓), re-tap = retirée. La gestion
+   (scan, édition, tickets, export) vit sur la page Favoris, accessible
+   par « Gérer » — hors de la navigation principale. */
+function favListItem(f){
+  const m=favCatalogMatch(f);
+  return m ? state.items.find(i=>i.catalogId===m.id)
+           : state.items.find(i=>!i.catalogId && i.name===f.nom);
+}
+function toggleFavInList(id){
+  const f=stockItem(id); if(!f) return;
+  const it=favListItem(f);
+  if(it){
+    state.items=state.items.filter(i=>i!==it);
+    saveState(); render(); toast("Retiré : "+f.nom);
+  }else{
+    addFavToList(id);
+  }
+}
+function tileLabel(nom){
+  /* nom court : sans le format entre parenthèses ni les grammages */
+  return nom.replace(/\s*\([^)]*\)\s*/g," ").replace(/\s*\d+\s*[×x]?\s*\d*\s*(g|kg|ml|cl|l)\b/gi,"").trim() || nom;
+}
+function favGridHtml(){
+  const favs=stockItems().sort((a,b)=>a.nom.localeCompare(b.nom,"fr"));
+  let out=`<div class="favHead">
+    <span class="favTitle">Vos produits</span>
+    <button class="iconBtn" id="quickScan" aria-label="Scanner">${I.camera}</button>
+    <button class="linkBtn" id="manageFavs">Gérer</button>
+  </div>`;
+  if(!favs.length){
+    out+=`<div class="card small muted">Ta base de produits est vide. Scanne les paquets de la maison ou photographie un ticket pour Claude — chaque produit deviendra une tuile à taper.</div>`;
+    return out;
+  }
+  out+=`<div class="favGrid">`+favs.map(f=>{
+    const inList=!!favListItem(f);
+    const lbl=tileLabel(f.nom);
+    return `<button class="tile ${inList?"in":""}" data-tile="${esc(f.id)}">
+      <span class="tIni">${inList?"✓":esc(lbl.charAt(0).toUpperCase())}</span>
+      <span class="tName">${esc(lbl)}</span>
+    </button>`;
+  }).join("")+`</div>`;
+  return out;
+}
+function bindFavGrid(body){
+  body.querySelectorAll("[data-tile]").forEach(b=>b.onclick=()=>toggleFavInList(b.dataset.tile));
+  const on=(sel,fn)=>{ const el=body.querySelector(sel); if(el) el.onclick=fn; };
+  on("#quickScan", openScanner);
+  on("#manageFavs", ()=>switchView("stock"));
+}
+function refillCardsHtml(){
+  let out="";
+  for(const [batch,rows] of pendingRefills()){
+    out+=`<div class="card refillCard">
+      <b class="rcpt">${I.receipt} ${esc(batch)}</b>
+      <div class="small" style="margin:6px 0 8px">${rows.map(r=>{
+        const p=stockItem(r.poste);
+        return `${esc(p?p.nom:r.nom)}${p?"":" <span class='muted'>(nouveau)</span>"}`;
+      }).join(" · ")}</div>
+      <div class="bactions">
+        <button class="primaryBtn" data-refill="${esc(batch)}">Ajouter aux favoris</button>
+        <button data-norefill="${esc(batch)}">Ignorer</button>
+      </div>
+    </div>`;
+  }
+  return out;
+}
+function bindRefillCards(body){
+  body.querySelectorAll("[data-refill]").forEach(b=>b.onclick=()=>applyRefill(b.dataset.refill));
+  body.querySelectorAll("[data-norefill]").forEach(b=>b.onclick=()=>dismissRefill(b.dataset.norefill));
 }
 
 /* ---- Favoris ------------------------------------------------------
@@ -1167,6 +1290,22 @@ function favCatalogMatch(f){
     const cn = norm(c.name);
     return cn && (n.includes(cn) || cn.includes(n));
   });
+  if(!hit){
+    /* l'ordre des mots diffère souvent entre le ticket ("Chocolat noir 85%
+       (Galler)") et le catalogue ("Galler chocolat noir 85% profond") :
+       on rapproche par recouvrement de mots significatifs. */
+    const toks = s => new Set(norm(s).split(/[^a-z0-9%]+/).filter(t=>t.length>2 || /\d/.test(t)));
+    const ft = toks(f.nom);
+    let bestScore = 0.69;
+    for(const c of DATA.catalog){
+      const ct = toks(c.name);
+      if(!ct.size) continue;
+      let inter = 0;
+      for(const t of ct) if(ft.has(t)) inter++;
+      const score = inter / Math.min(ct.size, ft.size || 1);
+      if(score > bestScore){ bestScore = score; hit = c; }
+    }
+  }
   if(!hit && f.famille){
     const cands = DATA.catalog.filter(c => c.famille===f.famille && bestStoreFor(c,1));
     cands.sort((a,b)=>{
@@ -1200,7 +1339,8 @@ function renderStock(){
   const body=$("#stockBody");
   const items=stockItems();
 
-  let html=`<div class="stkTools">
+  let html=`<button class="backLink" id="backCourses">‹ Retour aux courses</button>
+  <div class="stkTools">
     <button class="primaryBtn" id="scanBtn">${I.camera} Scanner un produit</button>
     <button id="newPoste">+ Nouveau favori</button>
   </div>`;
@@ -1267,6 +1407,7 @@ function posteForm(){
 function isCustomPoste(id){ return stock.custom.some(p=>p.id===id); }
 function bindStock(body){
   const on=(sel,fn)=>{ const el=body.querySelector(sel); if(el) el.onclick=fn; };
+  on("#backCourses", ()=>switchView("liste"));
   on("#scanBtn", openScanner);
   on("#newPoste", ()=>{ stockEdit="new"; renderStock(); });
   on("#pfCancel", ()=>{ stockEdit=null; renderStock(); });
@@ -1716,22 +1857,16 @@ function popularPicks(n){
 }
 function renderList(){
   const body=$("#listBody");
-  const sug = suggestionsHtml();
+  const sug = refillCardsHtml() + suggestionsHtml();
   if(state.items.length===0){
-    const picks=popularPicks(8);
     body.innerHTML = sug + `
-      <div class="empty">
+      <div class="empty" style="padding:26px 18px 10px">
         <div class="big">${I.cart}</div>
         <div><b>Ta liste est vide</b></div>
-        <div class="small">${picks.length
-          ? "Ajoute des articles ci-dessus, ou pars d'une suggestion :"
-          : "Ajoute des articles ci-dessus. Le catalogue de prix est vide — tout ce que tu ajoutes restera un article libre, sans comparaison."}</div>
-        <div class="chips">${picks.map(c=>
-          `<button class="chip" data-add="${esc(c.id)}">${esc(c.name)}${c.unit?` <span class="muted small">${esc(c.unit)}</span>`:""}</button>`
-        ).join("")}</div>
-      </div>`;
-    bindSuggestions(body);
-    body.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>addItem(b.dataset.add,null));
+        <div class="small">Tape sur vos produits ci-dessous, ou cherche dans la barre.</div>
+      </div>` + favGridHtml();
+    bindSuggestions(body); bindRefillCards(body);
+    bindFavGrid(body);
     return;
   }
   let html="";
@@ -1787,8 +1922,10 @@ function renderList(){
       if(it.cat) html+=stepBox(it);
     }
   }
+  html += favGridHtml();
   body.innerHTML=sug+html;
-  bindSuggestions(body);
+  bindSuggestions(body); bindRefillCards(body);
+  bindFavGrid(body);
   body.querySelectorAll(".item").forEach(el=>{
     const uid=el.dataset.uid;
     el.querySelectorAll("[data-act]").forEach(b=>b.onclick=()=>itemAction(uid,b.dataset.act));
@@ -2101,6 +2238,7 @@ function toast(msg){
   clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),1800);
 }
 document.querySelectorAll("nav .ico[data-i]").forEach(s=>{ s.innerHTML = I[s.dataset.i] || ""; });
+document.querySelectorAll("#prixBar button").forEach(b=>b.onclick=()=>switchView(b.dataset.sub));
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>switchView(b.dataset.view));
 $("#catSearch").addEventListener("input", e=>{ catQuery=e.target.value; renderCatalogue(); });
 $("#syncBadge").onclick=syncSetup;
