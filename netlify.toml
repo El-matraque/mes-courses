@@ -3,3 +3,27 @@
 
 # La fonction netlify/functions/prices.mjs expose déjà /api/prices via
 # `export const config = { path: "/api/prices" }` — pas de redirect nécessaire.
+# Sans variable PRICE_PROVIDER, elle répond 501 : voir le commentaire en tête
+# du fichier, elle ne doit JAMAIS servir de prix inventés.
+
+# Les CSV sont la source de vérité et changent à chaque relevé : on interdit
+# le cache long, sinon l'app continue d'afficher les prix de la veille après
+# un commit. L'app elle-même peut être mise en cache brièvement.
+[[headers]]
+  for = "/data/*.csv"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# La caméra du scanner de codes-barres nécessite un contexte sécurisé (HTTPS,
+# fourni par Netlify) et une autorisation explicite de la Permissions-Policy.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Permissions-Policy = "camera=(self)"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
