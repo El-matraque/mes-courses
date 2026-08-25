@@ -1996,7 +1996,11 @@ function renderList(){
       let sub;
       if(it.needInfo){
         const o=it.needInfo.overall;
-        sub = `${it.needInfo.options.length} options · dès ${fmt(o.cost/it.qty)} — ${esc(o.c.name)}`;
+        /* quand les formats se comparent au prix unitaire, c'est LUI qui
+           départage : l'afficher évite de croire à une erreur quand le
+           gagnant a le plus gros prix affiché (un 12 pièces bat un 6). */
+        const upTxt = it.needInfo.byUnit && o.up ? ` (${fmt(o.up.v)}/${UNIT_LABEL[o.up.u]})` : "";
+        sub = `${it.needInfo.options.length} options · dès ${fmt(o.cost/it.qty)}${upTxt} — ${esc(o.c.name)}`;
       }
       else if(it.orphan)    sub = "retiré du catalogue — plus de prix associé";
       else if(!it.cat) sub = "article libre — non comparé";
