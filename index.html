@@ -636,7 +636,28 @@ let view = "liste";
 let basketMode = "split"; // 'split' | 'single'
 
 const LS_KEY = "mes-courses-v1";
+/* --- Marques de suppression -------------------------------------------
+   Sans elles, un appareil qui a perdu sa base de fusion (navigateur
+   changé, cache vidé, mode privé) reprend ses vieux articles pour des
+   créations et les repousse au serveur : la liste vidée se remplit
+   toute seule. On note donc CE QUI A ÉTÉ SUPPRIMÉ, avec la date ; la
+   fusion écarte ensuite tout article portant une marque, quel que soit
+   l'état des bases. Un article re-ajouté reçoit un nouvel uid, donc il
+   n'est jamais rattrapé par l'ancienne marque. */
+const TOMB_MAX_AGE = 60*24*3600*1000;   // 60 jours, puis on oublie
+let itemUids = new Set();
+function snapUids(){ itemUids = new Set(state.items.map(i=>String(i.uid))); }
+function noteDeletions(){
+  if(!state.deleted) state.deleted={};
+  const now = Date.now();
+  const cur = new Set(state.items.map(i=>String(i.uid)));
+  for(const uid of itemUids) if(!cur.has(uid)) state.deleted[uid]=now;
+  for(const [uid,ts] of Object.entries(state.deleted))
+    if(now-ts > TOMB_MAX_AGE) delete state.deleted[uid];
+  itemUids = cur;
+}
 function saveState(){
+  noteDeletions();
   try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){}
   if(typeof scheduleSync==="function") scheduleSync();
 }
@@ -645,6 +666,8 @@ function loadState(){
     const raw = localStorage.getItem(LS_KEY);
     if(raw){ const s = JSON.parse(raw); if(s && Array.isArray(s.items)) state = s; }
   }catch(e){}
+  if(!state.deleted) state.deleted={};
+  snapUids();
 }
 
 /* ==================== INVENTAIRE (modèle hybride) ====================
@@ -726,7 +749,7 @@ let syncTimer=null, syncBusy=false, syncApplying=false, syncState="off"; // off 
 function syncPw(){ try{ return localStorage.getItem(SY_PW_KEY)||""; }catch(e){ return ""; } }
 function syncEnabled(){ return !!syncPw(); }
 function localDoc(){
-  return { items: state.items,
+  return { items: state.items, deleted: state.deleted||{},
            stock: { qty:stock.qty, seuil:stock.seuil, custom:stock.custom,
                     ean:stock.ean, dismissed:stock.dismissed, refillsDone:stock.refillsDone } };
 }
@@ -737,7 +760,9 @@ function applyDoc(d){
      autre 3 s plus tard, indéfiniment. */
   syncApplying=true;
   try{
+    if(d.deleted && typeof d.deleted==="object") state.deleted=d.deleted;
     if(Array.isArray(d.items)) state.items=d.items;
+    snapUids();   // ce que la fusion a retiré est déjà marqué : ne pas re-marquer
     if(d.stock && typeof d.stock==="object"){
       stock={ qty:d.stock.qty||{}, seuil:d.stock.seuil||{}, custom:d.stock.custom||[],
               ean:d.stock.ean||{}, dismissed:d.stock.dismissed||[], refillsDone:d.stock.refillsDone||[] };
@@ -780,8 +805,14 @@ function mergeMap(srv, loc, bas){
 function mergeDocs(srv, loc, bas){
   srv=srv||{items:[],stock:{}}; loc=loc||{items:[],stock:{}}; bas=bas||{items:[],stock:{}};
   const ss=srv.stock||{}, ls=loc.stock||{}, bs=bas.stock||{};
+  /* union des marques de suppression (la plus récente gagne) */
+  const deleted={...(srv.deleted||{})};
+  for(const [uid,ts] of Object.entries(loc.deleted||{}))
+    if(!(uid in deleted) || ts>deleted[uid]) deleted[uid]=ts;
   return {
-    items: mergeById(srv.items, loc.items, bas.items, x=>String(x.uid)),
+    deleted,
+    items: mergeById(srv.items, loc.items, bas.items, x=>String(x.uid))
+             .filter(i=>!(String(i.uid) in deleted)),
     stock: {
       qty:   mergeMap(ss.qty, ls.qty, bs.qty),
       seuil: mergeMap(ss.seuil, ls.seuil, bs.seuil),
@@ -1301,6 +1332,7 @@ function swapItem(uid, toId){
 /* Trois écrans, un rôle chacun : Liste coche, Produits ajoute, Prix
    analyse (promos, comparateur, paniers, catalogue en sous-onglets). */
 const needOpen=new Set();   // uid des besoins dont la liste complète est dépliée
+let clearArmed=false;       // "Vider la liste" demande une confirmation
 const PRIX_SUBS=["promos","comparer","paniers","catalogue"];
 let prixSub="promos";
 function switchView(v){
@@ -2117,8 +2149,21 @@ function renderList(){
       <button class="primaryBtn" id="finishShop">Terminer les courses (${nChecked} coché${nChecked>1?"s":""})</button>
     </div>`;
   }
+  if(items.length){
+    html+=`<div class="small muted" style="text-align:center; margin:14px 0 4px">
+      <button class="linkBtn" id="clearList">${clearArmed?"Confirmer : tout supprimer":"Vider la liste"}</button></div>`;
+  }
   body.innerHTML=sug+html;
   bindSuggestions(body);
+  const cl=body.querySelector("#clearList");
+  if(cl) cl.onclick=()=>{
+    if(!clearArmed){ clearArmed=true; renderList(); setTimeout(()=>{ if(clearArmed){ clearArmed=false; renderList(); } }, 5000); return; }
+    clearArmed=false;
+    const n=state.items.length;
+    state.items=[];
+    saveState(); render();          // saveState pose les marques de suppression
+    toast(`Liste vidée — ${n} article${n>1?"s":""}`);
+  };
   const fin=body.querySelector("#finishShop");
   if(fin) fin.onclick=()=>{
     state.items=state.items.filter(i=>!i.checked);
