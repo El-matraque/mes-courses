@@ -32,7 +32,7 @@ gran-soresina-padano-rape;rape;Gran Soresina Grana Padano AOP râpé;100 g;🥛 
 boni-bio-oeufs-m;oeufs;Boni Bio œufs frais M;12 pièces;🥛 Crèmerie;x;;x;;4,95;;2026-08-24
 garden-gourmet-tofu-basil;vege;Garden Gourmet Crunchy Tofu Basil;160 g;🥩 Viande & Poisson;3,29;;3,65;;3,29;;2026-08-24
 vivera-drumsticks;vege;Vivera Drumsticks végétaux 4 pc;216 g;🥩 Viande & Poisson;x;;3,69;;3,29;;2026-08-24
-laitue-iceberg;salade;Laitue iceberg;pièce;🍎 Fruits & Légumes;1,29;-10%;1,19;;1,09;;2026-08-24
+laitue-iceberg;salade;Laitue iceberg;pièce;🍎 Fruits & Légumes;1,29;-10%;1,09;;1,09;;2026-08-25
 boni-raisins-bleus;raisins;Boni raisins bleus sans pépins;400 g;🍎 Fruits & Légumes;x;;x;;2,59;;2026-08-24
 ail-frais;ail;Ail frais;1 kg;🍎 Fruits & Légumes;x;;7,99;;11,99;;2026-08-24
 poivrons-rouges;poivrons;Poivrons rouges;1 kg;🍎 Fruits & Légumes;x;;3,49;;2,69;;2026-08-24
@@ -69,3 +69,70 @@ carrefour-bio-cacao;cacao;Carrefour Bio 100% cacao;250 g;🥫 Épicerie;x;;5,59;
 delhaize-spaghetti;pates;Delhaize Spaghetti;500 g;🥫 Épicerie;0,45;;x;;x;;2026-08-24
 carrefour-classic-spaghetti;pates;Carrefour Classic' Spaghetti;500 g;🥫 Épicerie;x;;0,99;;x;;2026-08-24
 boni-spaghetti;pates;Boni spaghetti;500 g;🥫 Épicerie;x;;x;;0,89;;2026-08-24
+delhaize-oeufs-plein-air-m6;oeufs;Delhaize œufs plein air Medium;6 pièces;🥛 Crèmerie;2,15;;x;;x;;2026-08-25
+delhaize-oeufs-sol-mix-10;oeufs;Delhaize œufs au sol mix calibre;10 pièces;🥛 Crèmerie;3,49;;x;;x;;2026-08-25
+delhaize-oeufs-bio-mix-6;oeufs;Delhaize œufs bio mix calibres;6 pièces;🥛 Crèmerie;3,09;;x;;x;;2026-08-25
+bois-du-roi-oeufs-plein-air-l6;oeufs;Ferme Bois du Roi œufs plein air Large;6 pièces;🥛 Crèmerie;2,69;;;;;;2026-08-25
+columbus-oeufs-larges-6;oeufs;Columbus œufs Larges;6 pièces;🥛 Crèmerie;3,85;;;;;;2026-08-25
+carrefour-oeufs-plein-air-m12;oeufs;Carrefour œufs plein air Medium;12 pièces;🥛 Crèmerie;x;;4,29;;x;;2026-08-25
+carrefour-classic-oeufs-plein-air-m6;oeufs;Carrefour Classic' œufs plein air Medium;6 pièces;🥛 Crèmerie;x;;2,29;;x;;2026-08-25
+carrefour-oeufs-sol-6;oeufs;Carrefour œufs au sol;6 pièces;🥛 Crèmerie;x;;1,99;;x;;2026-08-25
+simpl-oeufs-sol-12;oeufs;Simpl œufs au sol;12 pièces;🥛 Crèmerie;x;;2,79;;x;;2026-08-25
+carrefour-bio-oeufs-m6;oeufs;Carrefour Bio œufs frais M;6 pièces;🥛 Crèmerie;x;;2,99;;x;;2026-08-25
+boni-oeufs-plein-air-m12;oeufs;Boni œufs plein air M;12 pièces;🥛 Crèmerie;x;;x;;4,79;;2026-08-25
+boni-oeufs-plein-air-l6;oeufs;Boni œufs plein air L;6 pièces;🥛 Crèmerie;x;;x;;2,51;;2026-08-25
+boni-oeufs-sol-m12;oeufs;Boni œufs belges au sol M;12 pièces;🥛 Crèmerie;x;;x;;3,99;;2026-08-25
+boni-oeufs-sol-blanc-10;oeufs;Boni œufs au sol blancs M/L;10 pièces;🥛 Crèmerie;x;;x;;3,49;;2026-08-25
+boni-bio-oeufs-l6;oeufs;Boni Selection Bio œufs frais L;6 pièces;🥛 Crèmerie;x;;x;;2,99;;2026-08-25
+activia-fruits-0-8x125;yaourt;Activia yaourt fruits 0% m.g.;8 × 125 g;🥛 Crèmerie;6,45;;;;6,45;;2026-08-25
+activia-fruits-mix-8x125;yaourt;Activia yaourt fruits mix probiotiques;8 × 125 g;🥛 Crèmerie;6,35;;;;;;2026-08-25
+activia-fraise-4x125;yaourt;Activia yaourt fraise morceaux;4 × 125 g;🥛 Crèmerie;;;2,35;;;;2026-08-25
+activia-vanille-4x125;yaourt;Activia yaourt vanille;4 × 125 g;🥛 Crèmerie;;;2,59;;;;2026-08-25
+delhaize-yaourt-fruits-0-8x125;yaourt;Delhaize yaourt fruits 0% m.g.;8 × 125 g;🥛 Crèmerie;2,09;;x;;x;;2026-08-25
+danone-yaourt-fruits-8x125;yaourt;Danone yaourt fruits rouges mixés;8 × 125 g;🥛 Crèmerie;5,59;;;;5,59;;2026-08-25
+danone-yaourt-maigre-12x125;yaourt;Danone yaourt maigre fruits;12 × 125 g;🥛 Crèmerie;;;;;4,95;;2026-08-25
+boni-yaourt-fruits-8x125;yaourt;Boni yaourt fruits mixés 3 goûts;8 × 125 g;🥛 Crèmerie;x;;x;;2,59;;2026-08-25
+everyday-yaourt-fruits-12x125;yaourt;Everyday yaourt maigre fruits;12 × 125 g;🥛 Crèmerie;x;;x;;2,59;;2026-08-25
+carrefour-classic-yaourt-jaunes-8x125;yaourt;Carrefour Classic' yaourt fruits jaunes;8 × 125 g;🥛 Crèmerie;x;;2,89;;x;;2026-08-25
+carrefour-classic-yaourt-rouges-8x125;yaourt;Carrefour Classic' yaourt fruits rouges;8 × 125 g;🥛 Crèmerie;x;;2,89;;x;;2026-08-25
+delhaize-mousseline-710;compote;Delhaize mousseline de pommes;710 g;🥫 Épicerie;0,64;;x;;x;;2026-08-25
+delhaize-mousseline-ssa-355;compote;Delhaize mousseline pommes sans sucre ajouté;355 g;🥫 Épicerie;1,45;;x;;x;;2026-08-25
+materne-mousseline-600;compote;Materne mousseline de pommes bocal;600 g;🥫 Épicerie;1,87;;1,89;;;;2026-08-25
+materne-mousseline-375;compote;Materne mousseline de pommes bocal;375 g;🥫 Épicerie;1,25;;1,25;;;;2026-08-25
+everyday-mousseline-710;compote;Everyday mousseline pommes bocal;710 g;🥫 Épicerie;x;;x;;0,64;;2026-08-25
+boni-mousseline-570;compote;Boni mousseline de pommes;570 g;🥫 Épicerie;x;;x;;1,01;;2026-08-25
+hak-mousseline-0sucre-350;compote;Hak mousseline de pommes 0% sucre;350 g;🥫 Épicerie;;;;;1,99;;2026-08-25
+hak-mousseline-700;compote;Hak mousseline de pommes qualité extra;700 g;🥫 Épicerie;;;2,69;;;;2026-08-25
+carrefour-classic-mousseline-560;compote;Carrefour Classic' mousseline pommes;560 g;🥫 Épicerie;x;;0,99;;x;;2026-08-25
+boni-noir-85;chocolat;Boni chocolat noir Côte d'Ivoire 85%;100 g;🥫 Épicerie;x;;x;;2,09;;2026-08-25
+carrefour-bio-noir-85;chocolat;Carrefour Bio chocolat noir 85% Pérou;100 g;🥫 Épicerie;x;;2,85;;x;;2026-08-25
+delicata-noir-85;chocolat;Delicata chocolat noir 85%;100 g;🥫 Épicerie;2,89;;x;;x;;2026-08-25
+cote-dor-bio-noir-85;chocolat;Côte d'Or chocolat noir 85% bio;90 g;🥫 Épicerie;3,75;;3,69;;;;2026-08-25
+lindt-noir-85;chocolat;Lindt chocolat noir 85% cacao;100 g;🥫 Épicerie;3,69;;;;;;2026-08-25
+ethiquable-noir-85;chocolat;Ethiquable chocolat noir 85% Madagascar;100 g;🥫 Épicerie;;;4,45;;;;2026-08-25
+chocolates-from-heaven-85;chocolat;Chocolates From Heaven noir 85% bio;100 g;🥫 Épicerie;3,79;;;;;;2026-08-25
+delhaize-tofu-bio-325;vege;Delhaize tofu nature bio;325 g;🥩 Viande & Poisson;1,49;;x;;x;;2026-08-25
+delhaize-tofu-bio-500;vege;Delhaize tofu nature bio;500 g;🥩 Viande & Poisson;1,88;;x;;x;;2026-08-25
+carrefour-bio-tofu-250;vege;Carrefour Bio tofu nature;250 g;🥩 Viande & Poisson;x;;1,19;;x;;2026-08-25
+carrefour-bio-tofu-fume-200;vege;Carrefour Bio tofu fumé;200 g;🥩 Viande & Poisson;x;;1,69;;x;;2026-08-25
+boni-plant-tofu-2x200;vege;Boni Plan't tofu bio;2 × 200 g;🥩 Viande & Poisson;x;;x;;1,29;;2026-08-25
+hobbit-tofu-nature-250;vege;De Hobbit tofu nature bio;250 g;🥩 Viande & Poisson;;;;;2,79;;2026-08-25
+prolaterre-tofu-fume-200;vege;Prolaterre tofu fumé artisanal bio;200 g;🥩 Viande & Poisson;;;;;2,59;;2026-08-25
+sofine-tofu-180;vege;SoFine tofu à la minute naturel;180 g;🥩 Viande & Poisson;;;3,00;;;;2026-08-25
+delhaize-salade-iceberg-emb;salade;Delhaize salade iceberg emballée;pièce;🍎 Fruits & Légumes;1,29;-10%;x;;x;;2026-08-25
+delhaize-laitue-pommee;salade;Delhaize laitue pommée avec racines;pièce;🍎 Fruits & Légumes;1,05;;x;;x;;2026-08-25
+boni-salade-iceberg-300;salade;Boni salade iceberg râpée;300 g;🍎 Fruits & Légumes;x;;x;;1,22;;2026-08-25
+sanex-zero-hydrate-400;geldouche;Sanex Zero% douche hydratante;400 ml;🧴 Hygiène & Entretien;5,59;;5,29;;;;2026-08-25
+sanex-hydrating-600;geldouche;Sanex Expert Skin Health hydratation douche;600 ml;🧴 Hygiène & Entretien;7,69;;7,69;;;;2026-08-25
+sanex-protector-600;geldouche;Sanex Expert Skin Health Protector douche;600 ml;🧴 Hygiène & Entretien;7,69;;;;;;2026-08-25
+sanex-sensitive-600;geldouche;Sanex Expert Skin Health Sensitive douche;600 ml;🧴 Hygiène & Entretien;7,69;;;;;;2026-08-25
+sanex-peau-seche-400;geldouche;Sanex douche peau sèche nourrissant;400 ml;🧴 Hygiène & Entretien;5,45;;;;;;2026-08-25
+sanex-hypoallergenique-400;geldouche;Sanex Expert hypoallergénique douche;400 ml;🧴 Hygiène & Entretien;;;7,19;;;;2026-08-25
+ultra-doux-camomille-300;shampooing;Garnier Ultra Doux shampooing camomille;300 ml;🧴 Hygiène & Entretien;;;5,09;;4,31;;2026-08-25
+ultra-doux-avocat-karite-300;shampooing;Garnier Ultra Doux shampooing avocat & karité (miel);300 ml;🧴 Hygiène & Entretien;;;5,09;;3,79;;2026-08-25
+ultra-doux-avocat-ecopack-250;shampooing;Garnier Ultra Doux shampooing avocat EcoPack;250 ml;🧴 Hygiène & Entretien;3,69;;;;;;2026-08-25
+ultra-doux-camomille-ecopack-250;shampooing;Garnier Ultra Doux shampooing camomille EcoPack;250 ml;🧴 Hygiène & Entretien;3,69;;;;;;2026-08-25
+ultra-doux-coco-charbon-300;shampooing;Garnier Ultra Doux shampooing lait de coco & charbon;300 ml;🧴 Hygiène & Entretien;;;;;4,31;;2026-08-25
+ultra-doux-5-plantes-300;shampooing;Garnier Ultra Doux shampooing detox 5 plantes;300 ml;🧴 Hygiène & Entretien;;;5,09;;4,31;;2026-08-25
+cereal-biscuits-130;biscuits;Céréal biscuits sans sucres 4 × 3 pièces;130 g;🥫 Épicerie;;;3,89;;;;2026-08-25
+cereal-orange-delight-140;biscuits;Céréal biscuits sans sucres Orange Delight;140 g;🥫 Épicerie;;;4,19;;;;2026-08-25
