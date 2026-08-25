@@ -502,6 +502,23 @@
   }
   .optRow.best .optPick{border-color:var(--accent-ring); background:var(--accent-soft)}
   .optRow.off{opacity:.6}
+  .optMore{
+    width:100%; margin:6px 0 2px; padding:7px; border:none; background:none;
+    color:var(--accent-deep); font-family:inherit; font-weight:800; font-size:11.5px;
+    cursor:pointer; border-top:1px solid var(--line);
+  }
+  .optAll{border-top:1px solid var(--line); padding-top:4px}
+  .optFull{padding:8px 0; border-bottom:1px solid var(--line)}
+  .optFull:last-child{border-bottom:none}
+  .optFull .ofName{font-size:12px; line-height:1.3; margin-bottom:5px}
+  .optFull .ofRow{display:flex; align-items:center; gap:6px; flex-wrap:wrap}
+  .optFull .ofP{
+    font-size:11px; font-weight:700; padding:3px 7px; border-radius:999px;
+    background:var(--bg); color:var(--muted); font-variant-numeric:tabular-nums;
+  }
+  .optFull .ofP.best{background:var(--accent-soft); color:var(--accent-deep)}
+  .optFull .ofP.off{opacity:.55}
+  .optFull .optPick{margin-left:auto}
   .altHint .altBtn{
     flex:none; border:1.5px solid var(--accent-ring); background:var(--card);
     color:var(--accent-deep); font-weight:700; font-size:11.5px;
@@ -1283,6 +1300,7 @@ function swapItem(uid, toId){
 /* ============================ VUES ============================ */
 /* Trois écrans, un rôle chacun : Liste coche, Produits ajoute, Prix
    analyse (promos, comparateur, paniers, catalogue en sous-onglets). */
+const needOpen=new Set();   // uid des besoins dont la liste complète est dépliée
 const PRIX_SUBS=["promos","comparer","paniers","catalogue"];
 let prixSub="promos";
 function switchView(v){
@@ -2037,7 +2055,44 @@ function renderList(){
             <button class="optPick" data-pick="${it.uid}" data-to="${esc(b.c.id)}">Choisir</button>
           </div>`;
         }).join("");
-        html+=`<div class="optBox">${rows}</div>`;
+        /* résumé = le moins cher par enseigne ; mais on doit pouvoir voir
+           TOUTES les références de la famille, avec leur prix dans chaque
+           magasin — c'est la vraie question quand on hésite sur une huile. */
+        const nOpt=it.needInfo.options.length;
+        let extra="";
+        if(nOpt>3){
+          const open=needOpen.has(String(it.uid));
+          extra=`<button class="optMore" data-more="${it.uid}">${open?"Masquer le détail":`Voir les ${nOpt} options`}</button>`;
+          if(open){
+            const key=o=>{
+              let b=null;
+              for(const v of Object.values(o.perStore)){
+                const k=it.needInfo.byUnit && v.up ? v.up.v : v.cost;
+                if(b===null || k<b) b=k;
+              }
+              return b===null?Infinity:b;
+            };
+            const sorted=[...it.needInfo.options].sort((a,b)=>key(a)-key(b));
+            extra+=`<div class="optAll">`+sorted.map(o=>{
+              let bestK=Infinity, bestS=null;
+              for(const [sid,v] of Object.entries(o.perStore)){
+                const k=it.needInfo.byUnit && v.up ? v.up.v : v.cost;
+                if(k<bestK){ bestK=k; bestS=sid; }
+              }
+              const cells=DATA.stores.map(st=>{
+                const v=o.perStore[st.id];
+                if(!v) return `<span class="ofP off">${esc(st.name.slice(0,3))} —</span>`;
+                return `<span class="ofP ${bestS===st.id?"best":""}">${esc(st.name.slice(0,3))} ${fmt(v.cost/it.qty)}</span>`;
+              }).join("");
+              const up=bestS && o.perStore[bestS].up;
+              return `<div class="optFull">
+                <div class="ofName">${esc(o.c.name)} <span class="muted">${esc(o.c.unit||"")}${up?` · ${fmt(up.v)}/${UNIT_LABEL[up.u]}`:""}</span></div>
+                <div class="ofRow">${cells}<button class="optPick" data-pick="${it.uid}" data-to="${esc(o.c.id)}">Choisir</button></div>
+              </div>`;
+            }).join("")+`</div>`;
+          }
+        }
+        html+=`<div class="optBox">${rows}${extra}</div>`;
       }
       /* substitut : meilleur produit équivalent (même famille) à quantité
          égale — c'est ici qu'« Œufs Boni » se compare aux autres œufs */
@@ -2079,8 +2134,14 @@ function renderList(){
     const c=catItem(b.dataset.to);
     if(!it || !c) return;
     it.catalogId=c.id; it.need=false; it.name=c.name;
+    needOpen.delete(String(b.dataset.pick));
     saveState(); render();
     toast("Choisi : "+c.name);
+  });
+  body.querySelectorAll("[data-more]").forEach(b=>b.onclick=()=>{
+    const k=String(b.dataset.more);
+    needOpen.has(k) ? needOpen.delete(k) : needOpen.add(k);
+    render();
   });
   body.querySelectorAll("[data-swap]").forEach(b=>b.onclick=()=>swapItem(b.dataset.swap, b.dataset.to));
   body.querySelectorAll("[data-step]").forEach(b=>b.onclick=()=>setQty(b.dataset.step, +b.dataset.to));
